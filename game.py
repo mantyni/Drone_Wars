@@ -4,6 +4,7 @@ import random
 from agent import Drone_agent
 from coded_policy import Policy
 
+#initialise game window
 pygame.init()
 
 display_width = 800
