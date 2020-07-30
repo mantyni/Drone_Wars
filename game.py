@@ -184,6 +184,7 @@ def game_loop():
         #my_drone.move_left_big()
 
         gameDisplay.fill(white)
+        button("QUIT",650,500,100,50,red,dark_red,quit)
 
         things(thing_startx, thing_starty, thing_width, thing_height, red)
         thing_starty += thing_speed
@@ -229,7 +230,8 @@ def game_loop():
 
 
 
-#game_intro()
+game_intro()
 game_loop()
+#TODO: send to the main menu instead of quiting the game when in game loop
 pygame.quit()
 quit()
