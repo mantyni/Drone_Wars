@@ -17,7 +17,6 @@ class Drone:
         self.droneImg = pygame.transform.scale(self.droneImg, (int(self.display_width*0.08),int(self.display_height*0.1)))
 
     def move_left(self):
-        #self.x_change -= self.drone_speed
         self.x_change = -self.drone_speed
 
     def move_right(self):

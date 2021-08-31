@@ -116,21 +116,15 @@ def collision(drone, obstacle):
 
 
 def game_menu():
-    intro = True
-    while intro:
+
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
 
         gameDisplay.fill(white)
-
         message_display("Drone Surf", 100)
-        #largeText = pygame.font.Font('freesansbold.ttf', 100)
-        #TextSurf, TextRect = text_objects('Drone surf', largeText)
-        #TextRect.center = ((display_width/2),(display_height)/2)
-        #gameDisplay.blit(TextSurf, TextRect)
-
         mouse = pygame.mouse.get_pos()
 
         # Mouse hover over buttons
@@ -217,7 +211,7 @@ def game_loop():
             score -= 1 
 
         # AI to avoid obstacles
-        avoid_obstacles(my_drone, my_obstacle)
+        #avoid_obstacles(my_drone, my_obstacle)
 
         # Draw white background and Quit button
         gameDisplay.fill(white)
