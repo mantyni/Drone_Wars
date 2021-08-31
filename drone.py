@@ -13,7 +13,7 @@ class Drone:
         self.display_width = display_width
         self.display_height = display_height
         self.gameDisplay = gameDisplay
-        self.droneImg = pygame.image.load('drone.png')
+        self.droneImg = pygame.image.load('images/drone.png')
         self.droneImg = pygame.transform.scale(self.droneImg, (int(self.display_width*0.08),int(self.display_height*0.1)))
 
     def move_left(self):
