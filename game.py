@@ -210,17 +210,17 @@ def game_loop():
         if collision(my_drone, my_obstacle):
             score -= 1 
 
-        # AI to avoid obstacles
-        #avoid_obstacles(my_drone, my_obstacle)
+        # AI to avoid obstacles. Comment out to play manually.
+        avoid_obstacles(my_drone, my_obstacle)
 
         # Draw white background and Quit button
         gameDisplay.fill(white)
         button("QUIT",650,500,100,50,red,dark_red,quit)
 
-        # Draw an obstacle, drone, score
+        # Draw obstacles
         my_obstacle.draw()
 
-        # Draw_drone(my_drone)
+        # Draw_drone
         my_drone.draw()
 
         # Draw score
