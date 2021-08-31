@@ -232,5 +232,4 @@ def game_loop():
 
 if __name__ == '__main__':
     game_menu()
-    #game_loop() # Skip main menu 
-    #TODO: send to the main menu instead of quiting the game when in game loop
+    
