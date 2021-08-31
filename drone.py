@@ -20,7 +20,6 @@ class Drone:
         self.x_change = -self.drone_speed
 
     def move_right(self):
-        #self.x_change += self.drone_speed
         self.x_change = self.drone_speed
 
     def move_up(self):
@@ -38,4 +37,3 @@ class Drone:
 
     def draw(self):
         self.gameDisplay.blit(self.droneImg, (self.x,self.y))
-  
