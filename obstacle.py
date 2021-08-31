@@ -12,7 +12,6 @@ class Obstacle:
         self.red = (255,0,0)
         self.gameDisplay = gameDisplay
 
-
     def reset(self):
         self.x = random.randrange(0, self.display_width)
         self.y = 0 - self.height
