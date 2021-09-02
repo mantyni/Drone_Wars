@@ -18,7 +18,7 @@ display_width = 800
 display_height = 600
 fps = 20
 gameDisplay = pygame.display.set_mode((display_width,display_height))
-pygame.display.set_caption('Drone Surf')
+pygame.display.set_caption('Drone Wars')
 
 # Define game colours
 black = (0,0,0)
@@ -129,7 +129,7 @@ def game_menu():
                 quit()
 
         gameDisplay.fill(white)
-        message_display("Drone Surf", 100)
+        message_display("Drone Wars", 100)
         mouse = pygame.mouse.get_pos()
 
         # Mouse hover over buttons
