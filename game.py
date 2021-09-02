@@ -17,8 +17,7 @@ clock = pygame.time.Clock()
 display_width = 800
 display_height = 600
 fps = 20
-gameDisplay = pygame.display.set_mode((display_width,display_height))
-pygame.display.set_caption('Drone Wars')
+gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant. TODO: test and rmeove. 
 
 # Define game colours
 black = (0,0,0)
@@ -32,6 +31,7 @@ screenSize(800,600)
 setAutoUpdate(False)
 
 setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
+pygame.display.set_caption('Drone Wars')
 
 # Game functions
 def scoreboard(count):
