@@ -239,5 +239,5 @@ def game_loop():
 
 
 if __name__ == '__main__':
-    #game_menu()
-    game_loop()
+    game_menu()
+    #game_loop()
