@@ -5,6 +5,7 @@ import time
 import random
 from drone import Drone
 from obstacle import Obstacle
+from pygame_functions import *
 
 #initialise game window
 pygame.init()
@@ -27,6 +28,10 @@ green = (0,255,0)
 dark_green = (0,150,0)
 red = (255,0,0)
 
+screenSize(800,600)
+setAutoUpdate(False)
+
+setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
 
 # Game functions
 def scoreboard(count):
@@ -213,8 +218,11 @@ def game_loop():
         # AI to avoid obstacles. Comment out to play manually.
         avoid_obstacles(my_drone, my_obstacle)
 
+        # Move the background. 
+        scrollBackground(0, 5)
+
         # Draw white background and Quit button
-        gameDisplay.fill(white)
+        #gameDisplay.fill(white) # Comment this out if using scrolBackground
         button("QUIT",650,500,100,50,red,dark_red,quit)
 
         # Draw obstacles
@@ -231,5 +239,5 @@ def game_loop():
 
 
 if __name__ == '__main__':
-    game_menu()
-    
+    #game_menu()
+    game_loop()

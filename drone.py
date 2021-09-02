@@ -13,8 +13,8 @@ class Drone:
         self.display_width = display_width
         self.display_height = display_height
         self.gameDisplay = gameDisplay
-        self.droneImg = pygame.image.load('images/drone.png')
-        self.droneImg = pygame.transform.scale(self.droneImg, (int(self.display_width*0.08),int(self.display_height*0.1)))
+        self.img = pygame.image.load('images/drone1.png')
+        self.img = pygame.transform.scale(self.img, (int(self.display_width*0.1),int(self.display_height*0.12)))
 
     def move_left(self):
         self.x_change = -self.drone_speed
@@ -36,4 +36,4 @@ class Drone:
         self.y += self.y_change
 
     def draw(self):
-        self.gameDisplay.blit(self.droneImg, (self.x,self.y))
+        self.gameDisplay.blit(self.img, (self.x,self.y))
