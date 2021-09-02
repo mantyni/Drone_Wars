@@ -3,13 +3,11 @@
 ## Introduction 
 This is a game built using PyGame. I made this game as a testbed platform to develop an AI for the drone to avoid asteroids and defeat bad robots. Currently AI is scripted and the drone does not reach very high score. Next I will implement Reinforcement Learning model for better results. Updates coming soon.
 
-<p align="center">
   
 ![Alt text](images/screen1.png?raw=true "Menu")
 
 ![Alt text](images/screen2.png?raw=true "Gameplay")
 
-</p>
 
 ## Instructions
 To start the game, download repository and run `python game.py`
