@@ -31,14 +31,14 @@ red = (255,0,0)
 ai_mode = True
 
 # Initialise display using pygame_functions
-screenSize(800,600)
-setAutoUpdate(False)
+#screenSize(800,600)
+#setAutoUpdate(False)
+#setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
 
 # Pygame menu
 surface = pygame.display.set_mode((display_width, display_height))
 
 
-setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
 pygame.display.set_caption('Drone Wars')
 
 # Game functions
@@ -238,10 +238,10 @@ def game_loop():
             avoid_obstacles(my_drone, my_obstacle)
 
         # Move the background. 
-        scrollBackground(0, 5)
+        ##scrollBackground(0, 5)
 
         # Draw white background and Quit button
-        #gameDisplay.fill(white) # Comment this out if using scrolBackground
+        gameDisplay.fill(white) # Comment this out if using scrolBackground
         button("QUIT",650,500,100,50,red,dark_red,quit)
 
         # Draw obstacles
