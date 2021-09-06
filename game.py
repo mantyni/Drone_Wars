@@ -139,6 +139,7 @@ def set_ai(value, value2):
         print("AI mode is: ", ai_mode)
 
 
+# Game menu function is not used anymore since it's superseeded by pygame-menu
 def game_menu():
 
     while True:
