@@ -6,6 +6,7 @@ import random
 from drone import Drone
 from obstacle import Obstacle
 from pygame_functions import *
+import pygame_menu
 
 #initialise game window
 pygame.init()
@@ -17,7 +18,7 @@ clock = pygame.time.Clock()
 display_width = 800
 display_height = 600
 fps = 20
-gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant. TODO: test and rmeove. 
+gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
 
 # Define game colours
 black = (0,0,0)
@@ -27,8 +28,15 @@ green = (0,255,0)
 dark_green = (0,150,0)
 red = (255,0,0)
 
+ai_mode = True
+
+# Initialise display using pygame_functions
 screenSize(800,600)
 setAutoUpdate(False)
+
+# Pygame menu
+surface = pygame.display.set_mode((display_width, display_height))
+
 
 setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
 pygame.display.set_caption('Drone Wars')
@@ -85,17 +93,17 @@ def button(msg,x,y,w,h,ic,ac,action=None):
 def avoid_obstacles(drone, obstacle):
 
     #Debug:
-    print ("drone x pos: ", drone.x)
-    print ("obstacle x pos: ", obstacle.x)
-    print ("distance", drone.x - obstacle.x)
+    #print ("drone x pos: ", drone.x)
+    #print ("obstacle x pos: ", obstacle.x)
+    #print ("distance", drone.x - obstacle.x)
     
     if (drone.x - obstacle.x) > 0 and drone.x < 600:
         drone.move_right()
-        print("moving right", abs(drone.x - obstacle.x))
+        #print("moving right", abs(drone.x - obstacle.x))
 
     elif drone.x - obstacle.x < 0 and drone.x > 80:
         drone.move_left()
-        print("moving left", abs(drone.x - obstacle.x))
+        #print("moving left", abs(drone.x - obstacle.x))
 
     else:
         drone.x_change = 0
@@ -118,6 +126,17 @@ def collision(drone, obstacle):
                  and drone.x + drone.drone_width < obstacle.x + obstacle.width):
                 
                 return True    
+
+
+def set_ai(value, value2):
+    global ai_mode
+
+    if value2 == 1:
+        ai_mode = True
+        print("AI mode is: ", ai_mode)
+    if value2 == 0:
+        ai_mode = False
+        print("AI mode is: ", ai_mode)
 
 
 def game_menu():
@@ -191,7 +210,6 @@ def game_loop():
                 elif event.key == pygame.K_LSHIFT:
                     my_drone.drone_speed = my_drone.drone_speed / 2
 
-
         # Update drone position 
         my_drone.update()
 
@@ -215,8 +233,9 @@ def game_loop():
         if collision(my_drone, my_obstacle):
             score -= 1 
 
-        # AI to avoid obstacles. Comment out to play manually.
-        avoid_obstacles(my_drone, my_obstacle)
+        # AI to avoid obstacles. 
+        if ai_mode:
+            avoid_obstacles(my_drone, my_obstacle)
 
         # Move the background. 
         scrollBackground(0, 5)
@@ -238,6 +257,14 @@ def game_loop():
         clock.tick(fps) 
 
 
+# Define PyGame menu components
+menu = pygame_menu.Menu('Drone Wars', 800, 600, theme=pygame_menu.themes.THEME_DARK)
+menu.add.selector('AI :', [('On', 1), ('Off', 0)], onchange=set_ai)
+menu.add.button('Play', game_loop)
+menu.add.button('Quit', pygame_menu.events.EXIT)
+
+
 if __name__ == '__main__':
-    game_menu()
+    #game_menu()
     #game_loop()
+    menu.mainloop(surface)
