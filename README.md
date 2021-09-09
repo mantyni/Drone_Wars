@@ -22,6 +22,8 @@ To train the agent run:
 And to play the game with the trained agent run:
 `python3 play.py`
 
+To play the game manually: 
+`python3 game.py`
 
 ## Requirements
 python 3, pygame, pygame-menu, pytorch, numpy

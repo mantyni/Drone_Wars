@@ -177,9 +177,98 @@ def game_menu():
         clock.tick(15)
 
 
-##########################
-# RL new functions here: #
-##########################
+def game_loop():
+
+    # Initialise drone and obstacle objects
+    my_drone = Drone(gameDisplay)
+    my_obstacle = Obstacle(gameDisplay)
+
+    my_drone.x = display_width * 0.5
+    my_drone.y = display_height * 0.5    
+    my_obstacle.x = random.randrange(0, display_width)
+    my_obstacle.y = -600
+    
+    score = 0
+    gameExit = False
+
+
+    while not gameExit:
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    my_drone.move_left()
+                elif event.key == pygame.K_RIGHT:
+                    my_drone.move_right()
+                elif event.key == pygame.K_UP:
+                    my_drone.move_up()
+                elif event.key == pygame.K_DOWN:
+                    my_drone.move_down()
+                elif event.key == pygame.K_LSHIFT:
+                    my_drone.drone_speed = my_drone.drone_speed * 2
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT \
+                    or event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+                    my_drone.x_change = 0 # Reset movement 
+                    my_drone.y_change = 0
+                elif event.key == pygame.K_LSHIFT:
+                    my_drone.drone_speed = my_drone.drone_speed / 2
+
+        # Update drone position 
+        my_drone.update()
+
+        # Update obstacle position. Move obstacle down the screen.
+        my_obstacle.update()
+
+        # Detect if drone left the display bounds, then game over
+        if out_of_bounds(my_drone, display_width, display_height):
+            crash()
+            gameExit = True
+
+        # Detect if obstacle went to the bottom of the screen, then reset y & x coordinates to start from the top again at a random x coordinate. 
+        # Increase obstacles speed as the game progresses. 
+        if my_obstacle.y > display_height:
+            my_obstacle.reset()
+            #if my_obstacle.speed < 50:
+            #    my_obstacle.speed = 1.15 * my_obstacle.speed
+            score += 1
+
+        # Detect when obstacle collides with the drone and reduce the score 
+        if collision(my_drone, my_obstacle):
+            score -= 1 
+
+        # AI to avoid obstacles. 
+        if ai_mode:
+            avoid_obstacles(my_drone, my_obstacle)
+
+        # Move the background. 
+        ##scrollBackground(0, 5)
+
+        # Draw white background and Quit button
+        gameDisplay.fill(white) # Comment this out if using scrolBackground
+        button("QUIT",650,500,100,50,red,dark_red,quit)
+
+        # Draw obstacles
+        my_obstacle.draw()
+
+        # Draw_drone
+        my_drone.draw()
+
+        # Draw score
+        scoreboard(score)
+
+        pygame.display.update()
+        clock.tick(fps) 
+
+
+
+######################
+# RL functions here: #
+######################
 
 def pre_processing(image, w=84, h=84):
     image = image[:800, 20:, :] # crop out the top so score is not visible
@@ -190,7 +279,6 @@ def pre_processing(image, w=84, h=84):
     #cv2.imwrite("bw.jpg", image)
 
     return image[None, :, :].astype(np.float32)
-
 
 
 class DroneWars(object):
@@ -277,7 +365,21 @@ class DroneWars(object):
 
 
 
+# Define PyGame menu components
+menu = pygame_menu.Menu('Drone Wars', 800, 600, theme=pygame_menu.themes.THEME_DARK)
+menu.add.selector('AI :', [('On', 1), ('Off', 0)], onchange=set_ai)
+menu.add.button('Play', game_loop)
+menu.add.button('Quit', pygame_menu.events.EXIT)
+
+
 if __name__ == "__main__":
-    drone = DroneWars()
-    while True:
-        state, reward, done = drone.step(randint(0, 2)) # TODO: change this to keyboard input instead of random
+
+    # Uncomment to play manually or use scripted AI
+    surface = pygame.display.set_mode((display_width, display_height))
+    menu.mainloop(surface)
+
+
+    # Uncomment to test step function for RL
+    #drone = DroneWars()
+    #while True:
+    #    state, reward, done = drone.step(randint(0, 2)) # TODO: change this to keyboard input instead of random
