@@ -7,7 +7,14 @@ from drone import Drone
 from obstacle import Obstacle
 from pygame_functions import *
 import pygame_menu
+from random import randrange, choice, randint
+import numpy as np
+from pygame.surfarray import array3d
+import torch
+import os
+import cv2
 
+#pygame.mixer.pre_init(44100, -16, 2, 2048)
 #initialise game window
 pygame.init()
 
@@ -17,7 +24,7 @@ clock = pygame.time.Clock()
 # Display parameters
 display_width = 800
 display_height = 600
-fps = 20
+fps = 60
 gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
 
 # Define game colours
@@ -36,7 +43,7 @@ ai_mode = True
 #setBackgroundImage(["images/bg2.jpg", "images/bg2.jpg"])
 
 # Pygame menu
-surface = pygame.display.set_mode((display_width, display_height))
+#surface = pygame.display.set_mode((display_width, display_height))
 
 
 pygame.display.set_caption('Drone Wars')
@@ -170,102 +177,107 @@ def game_menu():
         clock.tick(15)
 
 
-def game_loop():
+##########################
+# RL new functions here: #
+##########################
 
-    # Initialise drone and obstacle objects
-    my_drone = Drone(gameDisplay)
-    my_obstacle = Obstacle(gameDisplay)
+def pre_processing(image, w=84, h=84):
+    image = image[:800, 20:, :] # crop out the top so score is not visible
+    #cv2.imwrite("original.jpg", image)
+    image = cv2.cvtColor(cv2.resize(image, (w, h)), cv2.COLOR_BGR2GRAY)
+    #cv2.imwrite("color.jpg", image)
+    _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+    #cv2.imwrite("bw.jpg", image)
 
-    my_drone.x = display_width * 0.5
-    my_drone.y = display_height * 0.5    
-    my_obstacle.x = random.randrange(0, display_width)
-    my_obstacle.y = -600
-    
-    score = 0
-    gameExit = False
+    return image[None, :, :].astype(np.float32)
 
 
-    while not gameExit:
+
+class DroneWars(object):
+    def __init__(self):
+        self.my_drone = Drone(gameDisplay)
+        self.my_obstacle = Obstacle(gameDisplay)
+        self.my_drone.x = display_width * 0.5
+        self.my_drone.y = 500 # TODO, fix hardcoded y coordinate. Before was display_height * 0.5    
+        self.my_obstacle.x = random.randrange(0, display_width)
+        self.my_obstacle.y = -600       
+        self.score = 0
+        self.gameExit = False
+
+    def step(self, action, record=False): # 0: do nothing, 1: go left, 2: go right
         
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+        reward = 0.1
+        
+        if action == 0:
+                reward += 0.1
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    my_drone.move_left()
-                elif event.key == pygame.K_RIGHT:
-                    my_drone.move_right()
-                elif event.key == pygame.K_UP:
-                    my_drone.move_up()
-                elif event.key == pygame.K_DOWN:
-                    my_drone.move_down()
-                elif event.key == pygame.K_LSHIFT:
-                    my_drone.drone_speed = my_drone.drone_speed * 2
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT \
-                    or event.key == pygame.K_DOWN or event.key == pygame.K_UP:
-                    my_drone.x_change = 0 # Reset movement 
-                    my_drone.y_change = 0
-                elif event.key == pygame.K_LSHIFT:
-                    my_drone.drone_speed = my_drone.drone_speed / 2
+        elif action == 1:
+            self.my_drone.move_left()
+
+        elif action == 2:
+            self.my_drone.move_right()
+
 
         # Update drone position 
-        my_drone.update()
+        self.my_drone.update()
 
         # Update obstacle position. Move obstacle down the screen.
-        my_obstacle.update()
+        self.my_obstacle.update()
 
         # Detect if drone left the display bounds, then game over
-        if out_of_bounds(my_drone, display_width, display_height):
-            crash()
-            gameExit = True
+        if out_of_bounds(self.my_drone, display_width, display_height):
+            #crash()
+            reward = -1
+            self.gameExit = True
 
         # Detect if obstacle went to the bottom of the screen, then reset y & x coordinates to start from the top again at a random x coordinate. 
         # Increase obstacles speed as the game progresses. 
-        if my_obstacle.y > display_height:
-            my_obstacle.reset()
-            if my_obstacle.speed < 50:
-                my_obstacle.speed = 1.15 * my_obstacle.speed
-            score += 1
+        if self.my_obstacle.y > display_height:
+            self.my_obstacle.reset()
+            reward = 1
+            self.score += 1
+            #reward += 0.1
+            #if self.my_obstacle.speed < 50:
+            #    self.my_obstacle.speed = 1.15 * self.my_obstacle.speed
+
+
 
         # Detect when obstacle collides with the drone and reduce the score 
-        if collision(my_drone, my_obstacle):
-            score -= 1 
+        if collision(self.my_drone, self.my_obstacle):
+            self.score -= 1 
+            reward = -1
+            self.gameExit = True
 
-        # AI to avoid obstacles. 
-        if ai_mode:
-            avoid_obstacles(my_drone, my_obstacle)
+        # Redundant: 
+        if self.score < -10:
+            #crash()
+            self.gameExit = True
 
-        # Move the background. 
-        ##scrollBackground(0, 5)
+        # Added 
+        state = pygame.display.get_surface()
 
-        # Draw white background and Quit button
         gameDisplay.fill(white) # Comment this out if using scrolBackground
-        button("QUIT",650,500,100,50,red,dark_red,quit)
-
-        # Draw obstacles
-        my_obstacle.draw()
-
-        # Draw_drone
-        my_drone.draw()
-
-        # Draw score
-        scoreboard(score)
+        self.my_obstacle.draw()
+        self.my_drone.draw()
+        scoreboard(self.score)
 
         pygame.display.update()
         clock.tick(fps) 
 
+        if self.gameExit:
+            self.__init__()
 
-# Define PyGame menu components
-menu = pygame_menu.Menu('Drone Wars', 800, 600, theme=pygame_menu.themes.THEME_DARK)
-menu.add.selector('AI :', [('On', 1), ('Off', 0)], onchange=set_ai)
-menu.add.button('Play', game_loop)
-menu.add.button('Quit', pygame_menu.events.EXIT)
+        state = array3d(state)
+
+        if record:
+            return torch.from_numpy(pre_processing(state)), np.transpose(
+                cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, not (reward > 0)
+        else:
+            return torch.from_numpy(pre_processing(state)), reward, not (reward > 0)
 
 
-if __name__ == '__main__':
-    #game_menu()
-    #game_loop()
-    menu.mainloop(surface)
+
+if __name__ == "__main__":
+    drone = DroneWars()
+    while True:
+        state, reward, done = drone.step(randint(0, 2)) # TODO: change this to keyboard input instead of random

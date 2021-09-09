@@ -34,6 +34,8 @@ class Drone:
     def update(self):
         self.x += self.x_change
         self.y += self.y_change
+        self.x_change = 0
+        self.y_change = 0
 
     def draw(self):
         self.gameDisplay.blit(self.img, (self.x,self.y))
