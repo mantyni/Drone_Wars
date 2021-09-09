@@ -19,10 +19,10 @@ Implemented RL Deep Q method to train the agent. The results are great, agent av
 To train the agent run:
 `python3 train.py`
 
-And to play the game with the trained agent run:
+And to play the game with the trained RL agent run:
 `python3 play.py`
 
-To play the game manually: 
+To play the game manually or with scripted AI run: 
 `python3 game.py`
 
 ## Requirements

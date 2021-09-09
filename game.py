@@ -190,10 +190,15 @@ def game_loop():
     
     score = 0
     gameExit = False
+    movingLeft = False
+    movingRight = False
+    movingUp = False
+    movingDown = False
 
 
     while not gameExit:
         
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -201,22 +206,36 @@ def game_loop():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    my_drone.move_left()
+                    movingLeft = True
                 elif event.key == pygame.K_RIGHT:
-                    my_drone.move_right()
+                    movingRight = True
                 elif event.key == pygame.K_UP:
-                    my_drone.move_up()
+                    movingUp = True
                 elif event.key == pygame.K_DOWN:
-                    my_drone.move_down()
+                    movingDown = True
                 elif event.key == pygame.K_LSHIFT:
                     my_drone.drone_speed = my_drone.drone_speed * 2
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT \
                     or event.key == pygame.K_DOWN or event.key == pygame.K_UP:
-                    my_drone.x_change = 0 # Reset movement 
-                    my_drone.y_change = 0
+                    movingLeft = False
+                    movingRight = False
+                    movingDown = False
+                    movingUp= False
                 elif event.key == pygame.K_LSHIFT:
                     my_drone.drone_speed = my_drone.drone_speed / 2
+
+
+        # Moving the drone based on arrow keys pressed 
+        if movingLeft:
+            my_drone.move_left()
+        if movingRight:
+            my_drone.move_right()
+        if movingUp:
+            my_drone.move_up()
+        if movingDown:
+            my_drone.move_down()
+
 
         # Update drone position 
         my_drone.update()
@@ -367,7 +386,7 @@ class DroneWars(object):
 
 # Define PyGame menu components
 menu = pygame_menu.Menu('Drone Wars', 800, 600, theme=pygame_menu.themes.THEME_DARK)
-menu.add.selector('AI :', [('On', 1), ('Off', 0)], onchange=set_ai)
+menu.add.selector('Scripted AI :', [('On', 1), ('Off', 0)], onchange=set_ai)
 menu.add.button('Play', game_loop)
 menu.add.button('Quit', pygame_menu.events.EXIT)
 
@@ -379,7 +398,7 @@ if __name__ == "__main__":
     menu.mainloop(surface)
 
 
-    # Uncomment to test step function for RL
+    # Uncomment below to test DroneWars step function for RL
     #drone = DroneWars()
     #while True:
     #    state, reward, done = drone.step(randint(0, 2)) # TODO: change this to keyboard input instead of random
