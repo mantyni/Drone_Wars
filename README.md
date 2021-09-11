@@ -1,14 +1,16 @@
 # Drone Wars
 
 ## Introduction 
-I made this game as a testbed platform to develop an AI agebt that avoid asteroids and defeats bad robots. Currently AI is scripted and the drone agent does not reach very high score. Next I will implement Reinforcement Learning model for better results. Updates coming soon.
+I made this game as a testbed platform for developing an AI agent that avoids asteroids and defeats bad robots. 
 
-  
+## First iteration, simple heuristic agent behaviour 
+The agent follows predefined rules for avoiding incoming asteroids, however, does not reach high scores. The reason is because there are a lot of edge cases that would take time to implement agent behaviour for. 
+
 ![Alt text](images/gameplay.gif "Gameplay")
 
 
-## Update
-Implemented RL Deep Q method to train the agent. The results are great, agent avoids asteroids at high game speed better than human could. However, it's not perfect and sometimes a miss happens. 
+## Second iteration, Reinforcement Learning Deep Q method
+I have implemented RL Deep Q method to train the agent. The results are great, agent avoids asteroids at a very high game speed, better than human could. However, it is still not perfect and sometimes a miss happens. 
 
 
 ![Alt text](images/gameplay_rl.gif "Gameplay_RL")
@@ -26,6 +28,26 @@ To play the game manually or with scripted AI run:
 `python3 game.py`
 
 ## Requirements
-python 3, pygame, pygame-menu, pytorch, numpy
+* python 3
+* pygame
+* pygame-menu
+* pytorch
+* numpy
+
+
+## Next development steps
+* Improve the game 
+    * The drone can shoot asteroids
+    * Add top scores to the menu
+    * Add different types of asteroids
+    * Add power-ups for the drone
+* Improve AI
+    * Improve RL method to reach higher scores
+* Multi-agent 
+    * Make the game multi-agent so more than 1 drone is playing
+    * Adapt RL method for multi-agent game setting
+
+
+
 
 
