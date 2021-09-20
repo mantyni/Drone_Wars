@@ -4,13 +4,13 @@
 I made this game as a testbed platform for developing an AI agent that avoids asteroids and defeats bad robots. 
 
 ## First iteration, simple heuristic agent behaviour 
-The agent follows predefined rules for avoiding incoming asteroids, however, does not reach high scores. The reason is because there are a lot of edge cases that would take time to implement agent behaviour for. 
+The agent follows predefined rules for avoiding incoming asteroids, however, does not reach high scores. 
 
 ![Alt text](images/gameplay.gif "Gameplay")
 
 
 ## Second iteration, Reinforcement Learning Deep Q method
-I have implemented RL Deep Q method to train the agent. The results are great, agent avoids asteroids at a very high game speed, better than human could. However, it is still not perfect and sometimes a miss happens. 
+The agent is trained with RL Deep Q method. The results are great, agent avoids asteroids at a very high game speed, better than human could. However, it is still not perfect and sometimes a miss happens. 
 
 
 ![Alt text](images/gameplay_rl.gif "Gameplay_RL")
