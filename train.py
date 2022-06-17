@@ -7,24 +7,29 @@ import torch
 import torch.nn as nn
 
 from nn_model import DeepQNetwork
-from game import DroneWars
+#from game import DroneWars
+from game import *
+from environment import DroneWars
 
 
 def get_args():
     parser = argparse.ArgumentParser(
         """Reinforcement Learning Deep Q Network""")
-    parser.add_argument("--batch_size", type=int, default=64, help="The number of images per batch")
+    parser.add_argument("--batch_size", type=int, default=8, help="The number of images per batch") # was 64
     parser.add_argument("--optimizer", type=str, choices=["sgd", "adam"], default="adam")
-    parser.add_argument("--lr", type=float, default=1e-4)
+    #parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--initial_epsilon", type=float, default=0.1)
-    parser.add_argument("--final_epsilon", type=float, default=1e-4)
-    parser.add_argument("--num_decay_iters", type=float, default=2000000)
-    parser.add_argument("--num_iters", type=int, default=2000000)
+    parser.add_argument("--initial_epsilon", type=float, default=0.05)
+    #parser.add_argument("--initial_epsilon", type=float, default=1e-3)
+    parser.add_argument("--final_epsilon", type=float, default=1e-5)
+    #parser.add_argument("--final_epsilon", type=float, default=1e-2)
+    parser.add_argument("--num_decay_iters", type=float, default=1500000) #was 1000000
+    parser.add_argument("--num_iters", type=int, default=1500000) # was 1000000
     # Replay memory size must not exeed available RAM, otherwise will crash
     # 10000 = 1Gb
-    parser.add_argument("--replay_memory_size", type=int, default=20000, 
-                        help="Number of epoches between testing phases")
+    parser.add_argument("--replay_memory_size", type=int, default=1250, 
+                        help="Number of epoches between testing phases") # was 20000
     parser.add_argument("--saved_folder", type=str, default="model")
 
     args = parser.parse_args()
@@ -64,31 +69,91 @@ def train(opt):
     else:
         replay_memory = []
     criterion = nn.MSELoss()
-    env = DroneWars()
+    #env = DroneWars()
+    env = DroneWars(gameDisplay, display_width, display_height, clock, fps)
+
     state, _, _ = env.step(0)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :]
 
     # Adding score
     
     all_scores = np.array(1)
-
+    """
+    action_dict = {
+        (0,0) : [1,0,0,0,0,0,0,0,0],
+        (0,1) : [0,1,0,0,0,0,0,0,0], 
+        (0,2) : [0,0,1,0,0,0,0,0,0],
+        (1,1) : [0,0,0,1,0,0,0,0,0],
+        (1,0) : [0,0,0,0,1,0,0,0,0], 
+        (1,2) : [0,0,0,0,0,1,0,0,0],
+        (2,2) : [0,0,0,0,0,0,1,0,0],
+        (2,0) : [0,0,0,0,0,0,0,1,0],
+        (2,1) : [0,0,0,0,0,0,0,0,1] 
+    }
+    a = np.eye(9, dtype=int)
+    actions = {}
+    for n in range(9):
+        actions[n] = a[n]
+    """
+    action_dict = {
+        0 : [1,0,0,0,0,0,0,0,0],
+        1 : [0,1,0,0,0,0,0,0,0], 
+        2 : [0,0,1,0,0,0,0,0,0],
+        3 : [0,0,0,1,0,0,0,0,0],
+        4 : [0,0,0,0,1,0,0,0,0], 
+        5 : [0,0,0,0,0,1,0,0,0],
+        6 : [0,0,0,0,0,0,1,0,0],
+        7 : [0,0,0,0,0,0,0,1,0],
+        8 : [0,0,0,0,0,0,0,0,1] 
+    }
     
+    epsilon = 0.1
+
     while iter < opt.num_iters:
+
+        # learning rate update:
+        
+        #if iter % 80000 == 0:
+        #    optimizer.param_groups[0]['lr'] /= 10
+        #    epsilon -= 0.02
+
+        #if epsilon <= 0.01:
+        #    epsilon = 0.01
+        
+        #if optimizer.param_groups[0]['lr'] <= 1e-5:
+        #    optimizer.param_groups[0]['lr'] = 1e-5 
 
         if torch.cuda.is_available():
             prediction = model(state.cuda())[0]
         else:
             prediction = model(state)[0]
         # Exploration or exploitation
-        epsilon = opt.final_epsilon + (
-                max(opt.num_decay_iters - iter, 0) * (opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_iters)
-        u = random()
-        random_action = u <= epsilon
+        #epsilon = opt.final_epsilon + (
+        #        max(opt.num_decay_iters - iter, 0) * (opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_iters)
+        
+        epsilon = 0.001
+        u = random.random()
+        
+        #epsilon = 0.01 # new hardcoding epsilon
 
+        random_action = u <= epsilon
+        #print("episolon: ", epsilon)
+        #action = [0,0] # initialising empty actions
         if random_action:
-            action = randint(0, 2)
+            print("random")
+            #action = randint(0, 2)
+            action = randint(0, 8)
+            #action[0] = randint(0, 2)
+            #action[1] = randint(0, 2)
         else:
+            print("normal")
             action = torch.argmax(prediction).item()
+            #action[0] = torch.argmax(prediction[0:3]).item()
+            #action[1] = torch.argmax(prediction[3:6]).item()
+
+        #action = tuple(action)
+
+        #print("Test pred, action ", prediction, torch.argmax(prediction).item())
 
         next_state, reward, done = env.step(action)
         next_state = torch.cat((state[0, 1:, :, :], next_state))[None, :, :, :]
@@ -101,9 +166,58 @@ def train(opt):
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = zip(*batch)
 
         state_batch = torch.cat(tuple(state for state in state_batch))
-        action_batch = torch.from_numpy(
-            np.array([[1, 0, 0] if action == 0 else [0, 1, 0] if action == 1 else [0, 0, 1] for action in
-                      action_batch], dtype=np.float32))
+
+        #print("Action batch before: ", action_batch)
+        # original
+        #action_batch = torch.from_numpy(
+        #    np.array([[1, 0, 0] if action == 0 else [0, 1, 0] if action == 1 else [0, 0, 1] for action in
+        #              action_batch], dtype=np.float32))
+
+        #print("Length of action_batch = ", len(action_batch))
+        #print(action_batch)
+
+        # new here
+        """
+        [1,0,0] if 0
+        [0,1,0] if 1
+        [0,0,1] if 2
+
+        [1,0,0,1,0,0] if 0 0
+        [0,1,0,1,0,0] if 1 0
+        [1,0,0,0,1,0] if 0 1
+        [0,1,0,0,1,0] if 1 1
+        [0,1,0,0,0,1] if 1 2
+        [0,0,1,0,0,1] if 2 2
+        [0,0,1,0,1,0] if 2 1
+        [1,0,0,0,0,1] if 0 2
+        [0,0,1,1,0,0] if 2 0
+
+        [1,0,0,0,0,0,0,0,0] if 0 0
+        [0,1,0,0,0,0,0,0,0] if 0 1
+        [0,0,1,0,0,0,0,0,0] if 0 2
+        [0,0,0,1,0,0,0,0,0] if 1 1
+        [0,0,0,0,1,0,0,0,0] if 1 0
+        [0,0,0,0,0,1,0,0,0] if 1 2
+        [0,0,0,0,0,0,1,0,0] if 2 2
+        [0,0,0,0,0,0,0,1,0] if 2 0
+        [0,0,0,0,0,0,0,0,1] if 2 1
+        """
+
+      
+
+        #action_batch = torch.from_numpy(np.array(action_dict[action], dtype=np.float32))
+
+        # New working for 2 drones:
+        action_batch = torch.from_numpy(np.array([action_dict[action] for action in action_batch], dtype=np.float32))
+
+
+
+        #print("New action batch: ", action_batch)
+        # original: 
+        #action_batch = torch.from_numpy(
+        #    np.array([[1, 0, 0] if action == 0 else [0, 1, 0] if action == 1 else [0, 0, 1] for action in
+        #              action_batch], dtype=np.float32))
+
         reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None])
         next_state_batch = torch.cat(tuple(state for state in next_state_batch))
 
@@ -134,15 +248,16 @@ def train(opt):
         state = next_state
         iter += 1
 
-        """
-        print("Iteration: {}/{}, Loss: {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
+        #optimizer.param_groups[0]['lr']
+        #print("Iteration: {}/{}, Loss: {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
+        print("Iteration: {}/{}, Loss: {:.5f}, LR {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
             iter + 1,
             opt.num_iters,
             loss,
-            epsilon, reward, score))
-        """
+            optimizer.param_groups[0]['lr'], epsilon, reward, score))
+        
 
-        if (iter + 1) % 5000 == 0:
+        if (iter + 1) % 1250 == 0:
             print("Iteration: {}/{}, Loss: {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
             iter + 1,
             opt.num_iters,
@@ -163,4 +278,5 @@ def train(opt):
 
 if __name__ == "__main__":
     opt = get_args()
+    print("Opt", opt)
     train(opt)

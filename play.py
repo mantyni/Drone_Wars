@@ -2,7 +2,9 @@ import argparse
 import torch
 
 from nn_model import DeepQNetwork
-from game import DroneWars
+#from game import DroneWars
+from game import *
+from environment import DroneWars
 import cv2
 
 
@@ -33,7 +35,8 @@ def play(opt):
     checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
-    env = DroneWars()
+    #env = DroneWars()
+    env = DroneWars(gameDisplay, display_width, display_height, clock, fps)
     state, raw_state, _, _ = env.step(0, True)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :]
     
@@ -46,6 +49,9 @@ def play(opt):
     while not done:
         prediction = model(state)[0]
         action = torch.argmax(prediction).item()
+        #action = [0,0]
+        #action[0] = torch.argmax(prediction[0:3]).item()
+        #action[1] = torch.argmax(prediction[3:6]).item()
         next_state, raw_next_state, reward, done = env.step(action, True)
         out.write(raw_next_state)
         if torch.cuda.is_available():

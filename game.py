@@ -16,6 +16,9 @@ import cv2
 
 #pygame.mixer.pre_init(44100, -16, 2, 2048)
 #initialise game window
+#os.putenv('SDL_VIDEODRIVER', 'fbcon')
+#os.environ["SDL_VIDEODRIVER"] = "dummy"
+
 pygame.init()
 
 # Initiate game clock
@@ -24,8 +27,9 @@ clock = pygame.time.Clock()
 # Display parameters
 display_width = 800
 display_height = 600
-fps = 60
+fps = 30
 gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
+#gameDisplay = pygame.display.set_mode((1,1)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
 
 # Define game colours
 black = (0,0,0)
@@ -299,7 +303,7 @@ def pre_processing(image, w=84, h=84):
 
     return image[None, :, :].astype(np.float32)
 
-
+"""
 class DroneWars(object):
     def __init__(self):
         self.my_drone = Drone(gameDisplay)
@@ -381,7 +385,7 @@ class DroneWars(object):
                 cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, not (reward > 0)
         else:
             return torch.from_numpy(pre_processing(state)), reward, not (reward > 0)
-
+"""
 
 
 # Define PyGame menu components

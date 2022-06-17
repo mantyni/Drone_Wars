@@ -3,8 +3,10 @@ import random
 
 class Obstacle:
     def __init__(self, gameDisplay, display_width=800, display_height=600, *args, **kwargs):
-        self.x = 0
-        self.y = 0
+        #self.x = 0
+        #self.y = 0
+        self.x = random.randrange(0, display_width)
+        self.y = random.randrange(-1300, -550)# -600       
         self.speed = 30
         self.height = 100
         self.width = 100
