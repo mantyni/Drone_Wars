@@ -28,7 +28,9 @@ clock = pygame.time.Clock()
 display_width = 800
 display_height = 600
 fps = 30
-gameDisplay = pygame.display.set_mode((display_width,display_height)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
+flags = pygame.HIDDEN
+#flags = pygame.SHOWN
+gameDisplay = pygame.display.set_mode((display_width,display_height), flags) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
 #gameDisplay = pygame.display.set_mode((1,1)) # This is redundant due to pygame_functions package. TODO: test and rmeove. 
 
 # Define game colours
@@ -179,6 +181,7 @@ def game_menu():
 
         pygame.display.update()
         clock.tick(15)
+        
 
 
 def game_loop():
@@ -286,7 +289,7 @@ def game_loop():
 
         pygame.display.update()
         clock.tick(fps) 
-
+        
 
 
 ######################

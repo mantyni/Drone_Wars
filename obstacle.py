@@ -6,14 +6,14 @@ class Obstacle:
         #self.x = 0
         #self.y = 0
         self.x = random.randrange(0, display_width)
-        self.y = random.randrange(-1300, -550)# -600       
-        self.speed = 30
+        self.y = -600 #random.randrange(-1300, -550)# -600       
+        self.speed = 40
         self.height = 100
         self.width = 100
         self.display_width = display_width
         self.display_height = display_height
         self.gameDisplay = gameDisplay
-        self.img = pygame.image.load('images/asteroid.png')
+        self.img = pygame.image.load('images/asteroid.png').convert()
         self.img = pygame.transform.scale(self.img, (int(self.display_width*0.16),int(self.display_height*0.2)))
 
     def reset(self):
@@ -22,9 +22,6 @@ class Obstacle:
 
     def update(self):
         self.y += self.speed
-
-    #def draw(self):
-    #    pygame.draw.rect(self.gameDisplay, self.red, [self.x, self.y, self.width, self.height])
 
     def draw(self):
         self.gameDisplay.blit(self.img, (self.x,self.y))

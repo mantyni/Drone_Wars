@@ -1,7 +1,6 @@
 import argparse
 import os
 import random
-#from random import random, randint, sample
 import pickle
 import numpy as np
 import torch
@@ -9,29 +8,27 @@ import torch.nn as nn
 import pygame
 
 from nn_model import DeepQNetwork
-#from game import DroneWars
-#from game import *
 from environment import DroneWars
 
-
+from stable_baselines3.common.utils import get_linear_fn, is_vectorized_observation, polyak_update
 
 def get_args():
     parser = argparse.ArgumentParser(
         """Reinforcement Learning Deep Q Network""")
     parser.add_argument("--batch_size", type=int, default=32, help="The number of images per batch") # was 64 # start at 8 increase up to 64 throught
     parser.add_argument("--optimizer", type=str, choices=["sgd", "adam"], default="adam")
-    parser.add_argument("--lr", type=float, default=1e-5)
+    parser.add_argument("--lr", type=float, default=1e-4)
     #parser.add_argument("--lr", type=float, default=1e-4) #orig
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--initial_epsilon", type=float, default=1)
     #parser.add_argument("--initial_epsilon", type=float, default=1e-3)
-    parser.add_argument("--final_epsilon", type=float, default=0.005) # was 1e-5
+    parser.add_argument("--final_epsilon", type=float, default=0.001) # was 1e-5
     #parser.add_argument("--final_epsilon", type=float, default=1e-2)
-    parser.add_argument("--num_decay_iters", type=float, default=700000) #was 1000000
-    parser.add_argument("--num_iters", type=int, default=900000) # was 1000000
+    parser.add_argument("--num_decay_iters", type=float, default=500000) #was 1000000
+    parser.add_argument("--num_iters", type=int, default=650000) # was 1000000
     # Replay memory size must not exeed available RAM, otherwise will crash
     # 10000 = 1Gb
-    parser.add_argument("--replay_memory_size", type=int, default=20000, 
+    parser.add_argument("--replay_memory_size", type=int, default=100000, 
                         help="Number of epoches between testing phases") # was 20000
     parser.add_argument("--saved_folder", type=str, default="model")
     parser.add_argument("--render", type=bool, default=True) 
@@ -45,37 +42,48 @@ def train(opt):
     
     pygame.init()
     clock = pygame.time.Clock()
-    #if opt.render == True:
-    #    flags = pygame.SHOWN
-    #else:
-    #    flags = pygame.HIDDEN
     flags = pygame.SHOWN
 
     gameDisplay = pygame.display.set_mode((800,600), flags) 
-
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
-    model = DeepQNetwork()
+
+    model_update_rate = 10000
+
+    model = DeepQNetwork() # need to add a target network, initialy it's a copy # read more https://blog.gofynd.com/building-a-deep-q-network-in-pytorch-fa1086aa5435
+                            # update every 10k steps
+
+    model_target = DeepQNetwork()
 
     if torch.cuda.is_available():
         model.cuda()
-    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
+        model_target.cuda()
 
-    #print("TESTING: ", opt.lr, optimizer.param_groups[0]['lr'])
+    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
+    optimizer_target = torch.optim.Adam(model_target.parameters(), lr=opt.lr)
+
+    # maybe redundant:
+    optimizer.param_groups[0]['lr'] = opt.lr
+    #optimizer_target.param_groups[0]['lr'] = opt.lr
 
     if not os.path.isdir(opt.saved_folder):
         os.makedirs(opt.saved_folder)
     checkpoint_path = os.path.join(opt.saved_folder, "drone_wars.pth")
+    checkpoint_path_target = os.path.join(opt.saved_folder, "drone_wars_target.pth")
     memory_path = os.path.join(opt.saved_folder, "replay_memory.pkl")
 
     if os.path.isfile(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
+        checkpoint_target = torch.load(checkpoint_path_target)
         iter = checkpoint["iter"] + 1
         model.load_state_dict(checkpoint["model_state_dict"])
+        model_target.load_state_dict(checkpoint["model_state_dict"])
+        #model_target.load_state_dict(checkpoint_target["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer"])
+        #optimizer_target.load_state_dict(checkpoint_target["optimizer"])
         print("Load trained model from iteration {}".format(iter))
     else:
         iter = 0
@@ -86,36 +94,24 @@ def train(opt):
         print("Load replay memory")
     else:
         replay_memory = []
-    criterion = nn.MSELoss()
-    #env = DroneWars()
+    #criterion = nn.MSELoss()
+    criterion = nn.SmoothL1Loss() # stablebaselines dqn is using huber loss
+
     env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=200)
-    #env = DroneWars(display_width=800, display_height=600, fps=70)
 
     state, _, _, _ = env.step(0)
-    state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :]
-    print(state)
-
-    # Adding score
+    state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :] # coppies same state over for 4 times
+    # [None, :, :, :] doesnt do anything...
+    # uses 4 channels, coppies sames state info 4 times? # can change in nn to 2 channels
     
     all_scores = np.array(1)
     """
-    action_dict = {
-        (0,0) : [1,0,0,0,0,0,0,0,0],
-        (0,1) : [0,1,0,0,0,0,0,0,0], 
-        (0,2) : [0,0,1,0,0,0,0,0,0],
-        (1,1) : [0,0,0,1,0,0,0,0,0],
-        (1,0) : [0,0,0,0,1,0,0,0,0], 
-        (1,2) : [0,0,0,0,0,1,0,0,0],
-        (2,2) : [0,0,0,0,0,0,1,0,0],
-        (2,0) : [0,0,0,0,0,0,0,1,0],
-        (2,1) : [0,0,0,0,0,0,0,0,1] 
-    }
     a = np.eye(9, dtype=int)
     actions = {}
     for n in range(9):
         actions[n] = a[n]
     """
-    
+    # multiple drones
     action_dict = {
         0 : [1,0,0,0,0,0,0,0,0],
         1 : [0,1,0,0,0,0,0,0,0], 
@@ -128,6 +124,7 @@ def train(opt):
         8 : [0,0,0,0,0,0,0,0,1] 
     }
     """
+    # one drone
     action_dict = {
         0 : [1,0,0],
         1 : [0,1,0], 
@@ -137,47 +134,40 @@ def train(opt):
     while iter < opt.num_iters:
 
         # learning rate update:
-        optimizer.param_groups[0]['lr'] = opt.lr
-        #if iter % 80000 == 0:
-        #    optimizer.param_groups[0]['lr'] /= 10
-        #    epsilon -= 0.02
-
-        #if epsilon <= 0.01:
-        #    epsilon = 0.01
-        
-        #if optimizer.param_groups[0]['lr'] <= 1e-5:
-        #    optimizer.param_groups[0]['lr'] = 1e-5 
+        #optimizer.param_groups[0]['lr'] = opt.lr
 
         if torch.cuda.is_available():
-            prediction = model(state.cuda())[0]
+            #prediction = model(state.cuda())[0]
+            if iter > 50000:
+                prediction = model_target(state.cuda())[0]
+            else:
+                prediction = model(state.cuda())[0]
         else:
-            prediction = model(state)[0]
+            #prediction = model(state)[0]
+            #prediction = model_target(state)[0]
+            if iter > 50000:
+                prediction = model_target(state.cuda())[0]
+            else:
+                prediction = model(state.cuda())[0]
         # Exploration or exploitation
         epsilon = opt.final_epsilon + (
                 max(opt.num_decay_iters - iter, 0) * (opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_iters)
         
         u = random.random()
-        
-        #epsilon = 0.01 # new hardcoding epsilon
-
         random_action = u <= epsilon
-        #print("episolon: ", epsilon)
-        #action = [0,0] # initialising empty actions
-        if random_action:
-            print("random")
-            #action = random.randint(0, 2)
-            action = random.randint(0, 8)
-            #action[0] = randint(0, 2)
-            #action[1] = randint(0, 2)
-        else:
-            print("normal")
-            action = torch.argmax(prediction).item()
-            #action[0] = torch.argmax(prediction[0:3]).item()
-            #action[1] = torch.argmax(prediction[3:6]).item()
 
+        if random_action:
+            #action = random.randint(0, 2) # single drone
+            action = random.randint(0, 8)
+            #print("random", action)
+        else:
+            action = torch.argmax(prediction).item()
+            #print("normal", action)
 
         next_state, reward, done, _ = env.step(action)
+
         next_state = torch.cat((state[0, 1:, :, :], next_state))[None, :, :, :]
+
         replay_memory.append([state, action, reward, next_state, done])
         
         # TESTING:
@@ -191,56 +181,7 @@ def train(opt):
 
         state_batch = torch.cat(tuple(state for state in state_batch))
 
-        #print("Action batch before: ", action_batch)
-        # original
-        #action_batch = torch.from_numpy(
-        #    np.array([[1, 0, 0] if action == 0 else [0, 1, 0] if action == 1 else [0, 0, 1] for action in
-        #              action_batch], dtype=np.float32))
-
-        #print("Length of action_batch = ", len(action_batch))
-        #print(action_batch)
-
-        # new here
-        """
-        [1,0,0] if 0
-        [0,1,0] if 1
-        [0,0,1] if 2
-
-        [1,0,0,1,0,0] if 0 0
-        [0,1,0,1,0,0] if 1 0
-        [1,0,0,0,1,0] if 0 1
-        [0,1,0,0,1,0] if 1 1
-        [0,1,0,0,0,1] if 1 2
-        [0,0,1,0,0,1] if 2 2
-        [0,0,1,0,1,0] if 2 1
-        [1,0,0,0,0,1] if 0 2
-        [0,0,1,1,0,0] if 2 0
-
-        [1,0,0,0,0,0,0,0,0] if 0 0
-        [0,1,0,0,0,0,0,0,0] if 0 1
-        [0,0,1,0,0,0,0,0,0] if 0 2
-        [0,0,0,1,0,0,0,0,0] if 1 1
-        [0,0,0,0,1,0,0,0,0] if 1 0
-        [0,0,0,0,0,1,0,0,0] if 1 2
-        [0,0,0,0,0,0,1,0,0] if 2 2
-        [0,0,0,0,0,0,0,1,0] if 2 0
-        [0,0,0,0,0,0,0,0,1] if 2 1
-        """
-
-      
-
-        #action_batch = torch.from_numpy(np.array(action_dict[action], dtype=np.float32))
-
-        # New working for 2 drones:
         action_batch = torch.from_numpy(np.array([action_dict[action] for action in action_batch], dtype=np.float32))
-
-
-
-        #print("New action batch: ", action_batch)
-        # original: 
-        #action_batch = torch.from_numpy(
-        #    np.array([[1, 0, 0] if action == 0 else [0, 1, 0] if action == 1 else [0, 0, 1] for action in
-        #              action_batch], dtype=np.float32))
 
         reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None])
         next_state_batch = torch.cat(tuple(state for state in next_state_batch))
@@ -251,8 +192,15 @@ def train(opt):
             reward_batch = reward_batch.cuda()
             next_state_batch = next_state_batch.cuda()
         
-        current_prediction_batch = model(state_batch)
-        next_prediction_batch = model(next_state_batch)
+        #current_prediction_batch = model(state_batch)
+        #next_prediction_batch = model(next_state_batch)
+
+        if iter > 50000: 
+            current_prediction_batch = model_target(state_batch)
+            next_prediction_batch = model_target(next_state_batch)
+        else: 
+            current_prediction_batch = model(state_batch)
+            next_prediction_batch = model(next_state_batch)
 
         y_batch = torch.cat(
             tuple(reward if done else reward + opt.gamma * torch.max(prediction) for reward, done, prediction in
@@ -271,17 +219,34 @@ def train(opt):
 
         state = next_state
         iter += 1
+        
+        #uc = 10
+        #if (iter+1) > 10000:
+        #    uc = 1000
+        tau = 1
 
+        if (iter + 1) % 10000 == 0:
+            polyak_update(model.parameters(), model_target.parameters(), tau)
+            print("###########################")
+            print("### Updating target network")
+            print("###########################")
 
-        #optimizer.param_groups[0]['lr'] = opt.lr
-        #print("Iteration: {}/{}, Loss: {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
-        print("Iteration: {}/{}, Loss: {:.5f}, LR {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
-            iter + 1,
-            opt.num_iters,
-            loss,
-            optimizer.param_groups[0]['lr'], epsilon, reward, score))
-
+        """
         if (iter + 1) % 3000 == 0:
+            print("###########################")
+            print("### Updating target network")
+            print("###########################")
+            model_target.load_state_dict(checkpoint["model_state_dict"])
+        """
+
+        if (iter + 1) % 10 == 0:
+            print("Iteration: {}/{}, Loss: {:.5f}, LR {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
+                iter + 1,
+                opt.num_iters,
+                loss,
+                optimizer.param_groups[0]['lr'], epsilon, reward, score))
+        
+        if (iter + 1) % 5000 == 0:
             print("Iteration: {}/{}, Loss: {:.5f}, Epsilon {:.5f}, Reward: {}, Score: {}".format(
             iter + 1,
             opt.num_iters,
@@ -292,8 +257,13 @@ def train(opt):
                           "model_state_dict": model.state_dict(),
                           "optimizer": optimizer.state_dict()}
             torch.save(checkpoint, checkpoint_path)
-            
-            print("# Saving model. Average Score: ", np.mean(all_scores))
+
+            checkpoint_target = {iter: iter, 
+                            "model_state_dict": model_target.state_dict(),
+                            "optimizer": optimizer_target.state_dict()}
+            torch.save(checkpoint_target, checkpoint_path_target)
+
+            print("## Saving model. Average Score: ", np.mean(all_scores))
             all_scores = np.array(1) # Reset all_scores list
 
             with open(memory_path, "wb") as f:

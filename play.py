@@ -1,12 +1,16 @@
 import argparse
 import torch
-
+import pygame 
 from nn_model import DeepQNetwork
 #from game import DroneWars
-from game import *
+#from game import *
 from environment import DroneWars
 import cv2
 
+pygame.init()
+clock = pygame.time.Clock()
+flags = pygame.SHOWN
+gameDisplay = pygame.display.set_mode((800,600), flags) 
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -36,7 +40,7 @@ def play(opt):
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
     #env = DroneWars()
-    env = DroneWars(gameDisplay, display_width, display_height, clock, fps)
+    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=30)
     state, raw_state, _, _ = env.step(0, True)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :]
     
@@ -49,6 +53,7 @@ def play(opt):
     while not done:
         prediction = model(state)[0]
         action = torch.argmax(prediction).item()
+        print(action)
         #action = [0,0]
         #action[0] = torch.argmax(prediction[0:3]).item()
         #action[1] = torch.argmax(prediction[3:6]).item()
