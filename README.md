@@ -16,6 +16,13 @@ The agent is trained with RL Deep Q method. The results are great, agent avoids 
 ![Alt text](images/gameplay_rl.gif "Gameplay_RL")
 
 
+## Third iteration, Reinforcement Learning with Double Deep Q method and multiple drones
+The agent is trained to control 2 drones in a centralised fashion. The game problem complexity is much higher and it took significantly longer time to train the agent to reach reasonable score.
+Implementation description will be released soon. 
+
+
+![Alt text](images/gameplay_rl_2.gif "Gameplay_Multi_Agent_RL")
+
 ## Instructions
 
 To train the agent run:
