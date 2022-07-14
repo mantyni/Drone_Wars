@@ -11,12 +11,6 @@ from game import scoreboard
 import gym 
 from gym import spaces 
 
-# NOTES: 
-# Update of double q n should be every 50 steps or 5 episodes
-# first 50k steps are trained updating both networks
-# learning rate drops within 50k from 100% to 5%
-
-# Try with 2 obstacles
 
 def pre_processing(image, w=84, h=84):
     image = image[:800, 20:, :] # crop out the top so score is not visible
@@ -29,8 +23,6 @@ def pre_processing(image, w=84, h=84):
     a = np.array(image[None, :, :]).astype(np.float32) 
     #a = image[None, :, :].astype(np.uint8) # use for open ai baselines
     a = a / 255 # normalise the outputs # do not use for open ai gym
-    #print("TESTING")
-    #print(a) 
 
     return a #image[None, :, :].astype(np.float32)
 
@@ -89,7 +81,6 @@ class DroneWars(gym.Env):
         self.my_drone2.draw()
 
         scoreboard(self.score)
-
         pygame.display.update()
 
 
@@ -136,14 +127,12 @@ class DroneWars(gym.Env):
             reward += 0.01
             
         if action == 1:
-            # drone1 do nothing
-            # drone2 move left
+            # drone1 do nothing, drone2 move left
             #print("Action: 1, drone2 left")
             self.my_drone2.move_left()
             
         if action == 2:
-            #drone 1 do nothing
-            #drone 2 move right
+            #drone 1 do nothing, drone 2 move right
             #print("Action: 2, drone2 right")
             self.my_drone2.move_right()
         
@@ -154,36 +143,32 @@ class DroneWars(gym.Env):
             self.my_drone2.move_left()
 
         if action == 4:
-            #drone 1 move left
-            #drone 2 do nothing
+            #drone 1 move left, drone 2 do nothing
             #print("Action: 4, drone1 left")
             self.my_drone1.move_left()
 
         if action == 5:
-            #drone 1 move left 
-            #drone 2 move right
+            #drone 1 move left, drone 2 move right
             #print("Action: 3, drone1 left, drone2 move right")
             self.my_drone1.move_left()
             self.my_drone2.move_right()
 
         if action == 6:
-            #drone 1&2 mvoe right
+            #drone 1&2 move right
             #print("Action: 6, drone1 right, drone2 move right")
             self.my_drone1.move_right()
             self.my_drone2.move_right()
 
         if action == 7:
-            #drone 1 move right
+            #drone 1 move right, drone 2 do nothing
             #print("Action: 7, drone1 right")
             self.my_drone1.move_right()
-            # drone 2 do nothing
 
         if action == 8:
             #print("Action: 8, drone1 right, drone2 move left")
             self.my_drone1.move_right()
             self.my_drone2.move_left()
-            #drone 1 move right
-            # drone 2 move left
+            # drone 1 move right, drone 2 move left
         
         
         # Uncomment bellow for single drone actions
