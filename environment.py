@@ -11,6 +11,12 @@ from game import scoreboard
 import gym 
 from gym import spaces 
 
+# NOTES: 
+# Update of double q n should be every 50 steps or 5 episodes
+# first 50k steps are trained updating both networks
+# learning rate drops within 50k from 100% to 5%
+
+# Try with 2 obstacles
 
 def pre_processing(image, w=84, h=84):
     image = image[:800, 20:, :] # crop out the top so score is not visible
@@ -22,7 +28,7 @@ def pre_processing(image, w=84, h=84):
 
     a = np.array(image[None, :, :]).astype(np.float32) 
     #a = image[None, :, :].astype(np.uint8) # use for open ai baselines
-    a = a / 255 # normalise the outputs 
+    a = a / 255 # normalise the outputs # do not use for open ai gym
     #print("TESTING")
     #print(a) 
 
@@ -34,12 +40,10 @@ class DroneWars(gym.Env):
         super(DroneWars, self).__init__()
         self.my_drone1 = Drone(gameDisplay)
         self.my_drone1.x = display_width * 0.8
-        self.my_drone1.y = 500 
-
+        self.my_drone1.y = display_height * 0.85 #
         self.my_drone2 = Drone(gameDisplay)
         self.my_drone2.x = display_width * 0.2
-        self.my_drone2.y = 500 # TODO, fix hardcoded y coordinate. Before was display_height * 0.5    
-
+        self.my_drone2.y = display_height * 0.85 # 500
         self.gameDisplay = gameDisplay
         self.display_width = display_width
         self.display_height = display_height
@@ -54,35 +58,29 @@ class DroneWars(gym.Env):
         self.dark_green = (0,150,0)
         self.red = (255,0,0)
         self.obstacle_list = []
-        self.n_actions = 9
+        self.n_actions = 9 # 3 actions per drone so it's 3^3 action space
         self.action_space = spaces.Discrete(self.n_actions)
         #self.observation_space = spaces.Box(low=0, high=255, shape=(1, 84, 84), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0, high=255, shape=(1,84,84), dtype=np.uint8) #needed for cnn policy
-        #self.observation_space = {
-        #    'observation_space' : spaces.Box(low=0, high=1, shape=(1,84,84), dtype=np.float32)
-        #}
-
-
-
-        for n in range(0,1):
+        self.observation_space = spaces.Box(low=0, high=255, shape=(1,84,84), dtype=np.uint8) #needed for cnn policy for open baselines
+        self.num_of_obstacles = 1 # nuber of obstacles
+        
+        for n in range(0,self.num_of_obstacles):
             self.obstacle_list.append(Obstacle(gameDisplay))
-        pygame.display.set_caption('Drone Wars')
 
+        pygame.display.set_caption('Drone Wars')
+        
 
     def close(self):
         pass
 
+
     def reset(self):
-        """
-        Important: the observation must be a numpy array
-        :return: (np.array) 
-        """
-        #r = np.zeros((1,84,84)).astype(np.float32)
-        r = np.zeros((1,84,84)).astype(np.uint8)
+        #r = np.zeros((1,84,84)).astype(np.float32) # use for custom model
+        r = np.zeros((1,84,84)).astype(np.uint8) # use for openbaselines
         return r
 
-    def render(self):
 
+    def render(self):
         self.gameDisplay.fill(self.white) # Comment this out if using scrolBackground
         for obs in self.obstacle_list:
             obs.draw()
@@ -96,14 +94,12 @@ class DroneWars(gym.Env):
 
 
     def scoreboard(self, count):
-
         font = pygame.font.SysFont(None, 25)
         text = font.render("Score: "+str(count), True, black)
         self.gameDisplay.blit(text,(0,0))
 
 
     def out_of_bounds(self, drone, display_width, display_height):
-
         if (drone.x > display_width - drone.drone_width or drone.x < 0) or \
             (drone.y > display_height - drone.drone_height or drone.y < 0):
             
@@ -111,7 +107,6 @@ class DroneWars(gym.Env):
 
 
     def collision_multi(self, drone, obstacle_list):
-
         for obs in obstacle_list:
             if (drone.y < obs.y + obs.height):
 
@@ -123,7 +118,6 @@ class DroneWars(gym.Env):
 
 
     def collision(self, drone, obstacle):
-
             if (drone.y < obstacle.y + obstacle.height):
 
                 if (drone.x > obstacle.x
@@ -134,17 +128,13 @@ class DroneWars(gym.Env):
 
 
     def step(self, action, record=False): # 0: do nothing, 1: go left, 2: go right
-        
-        #print("Testing obs space:", self.observation_space)
-        #print("testing np array zeros", np.zeros((84,84)).astype(np.float32))
         reward = 0.1
         
         if action == 0:
-            pass
+            #pass
             #print("Action: 0, do nothing")
-            #reward += 0.01
+            reward += 0.01
             
-        
         if action == 1:
             # drone1 do nothing
             # drone2 move left
@@ -196,24 +186,7 @@ class DroneWars(gym.Env):
             # drone 2 move left
         
         
-        """
-        0 do nothing
-        1 move left
-        2 move right
-
-        0 [1,0,0,0,0,0,0,0,0] if 0 0
-        1 [0,1,0,0,0,0,0,0,0] if 0 1
-        2 [0,0,1,0,0,0,0,0,0] if 0 2
-        3 [0,0,0,1,0,0,0,0,0] if 1 1
-        4 [0,0,0,0,1,0,0,0,0] if 1 0
-        5 [0,0,0,0,0,1,0,0,0] if 1 2
-        6 [0,0,0,0,0,0,1,0,0] if 2 2
-        7 [0,0,0,0,0,0,0,1,0] if 2 0
-        8 [0,0,0,0,0,0,0,0,1] if 2 1
-        """
-
-
-        # single drone
+        # Uncomment bellow for single drone actions
         """
         if action == 0:
             pass
@@ -231,31 +204,18 @@ class DroneWars(gym.Env):
         self.my_drone2.update()
 
         # Update obstacle position. Move obstacle down the screen.
-        #self.my_obstacle.update()
         for obs in self.obstacle_list:
             obs.update()
 
-
-
         # Detect if obstacle went to the bottom of the screen, then reset y & x coordinates to start from the top again at a random x coordinate. 
-        # Increase obstacles speed as the game progresses. 
         for obs in self.obstacle_list:
             if obs.y > self.display_height:
                 obs.reset()
                 reward = 1
                 self.score += 1
 
-        #if self.my_obstacle.y > self.display_height:
-        #    self.my_obstacle.reset()
-        #    reward = 1
-        #    self.score += 1
-            #reward += 0.1
-            #if self.my_obstacle.speed < 50:
-            #    self.my_obstacle.speed = 1.15 * self.my_obstacle.speed
-
         # Detect if drone1 left the display bounds, then game over
         if self.out_of_bounds(self.my_drone1, self.display_width, self.display_height):
-            #crash()
             reward = -1
             self.gameExit = True
 
@@ -265,55 +225,35 @@ class DroneWars(gym.Env):
             self.gameExit = True
 
         # Detect when obstacle collides with the drone1 and reduce the score 
-        #if self.collision(self.my_drone1, self.my_obstacle):
         if self.collision_multi(self.my_drone1, self.obstacle_list):
             self.score -= 1 
             reward = -1
             self.gameExit = True
 
         # Detect when obstacle collides with the drone2 and reduce the score 
-        #if self.collision(self.my_drone2, self.my_obstacle):
         if self.collision_multi(self.my_drone2, self.obstacle_list):
             self.score -= 1 
             reward = -1
             self.gameExit = True
 
-
-        
-        # Added 
-
-        #self.gameDisplay.fill(self.white) # Comment this out if using scrolBackground
-        #self.my_obstacle.draw()
-        #for obs in self.obstacle_list:
-        #    obs.draw()
-            
-        #self.my_drone1.draw()
-        #self.my_drone2.draw()
-        #scoreboard(self.score)
-
-        #pygame.display.update()
-
         self.render()
-
         self.clock.tick(self.fps) 
-        #print("clock:", self.clock.get_fps()) # actual fps
-        #print("fps", self.fps) # set fps
+        #print("clock:", self.clock.get_fps()) # Uncomment to printout actual fps 
+        #print("fps", self.fps) 
 
         if self.gameExit:
             self.__init__(self.gameDisplay, self.display_width, self.display_height, self.clock, self.fps)
         
-        state = pygame.display.get_surface() # should be at the bottom
-
+        state = pygame.display.get_surface() 
         state = array3d(state)
        
-
-
         done = (not (reward > 0))
         info = {}
 
         if record:
+            #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
             return torch.from_numpy(pre_processing(state)), np.transpose(
-                cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, not (reward > 0)
+                cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info 
         else:
-            return torch.from_numpy(pre_processing(state)), reward, done, info
+            return torch.from_numpy(pre_processing(state)), reward, done, info # Use for openbaselines
             #return pre_processing(state), reward, done, info # use for gym baselines
