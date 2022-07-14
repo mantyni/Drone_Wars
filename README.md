@@ -23,10 +23,13 @@ Implementation description will be released soon.
 
 ![Alt text](images/gameplay_rl_2.gif "Gameplay_Multi_Agent_RL")
 
-## Instructions
+## Instructions 
 
 To train the agent run:
 `python3 train.py`
+
+To train with the Openbaselines3 
+`python3 test_dqn.py`
 
 And to play the game with the trained RL agent run:
 `python3 play.py`
