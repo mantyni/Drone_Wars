@@ -6,7 +6,7 @@ np.set_printoptions(threshold=np.inf)
 from pygame.surfarray import array3d
 import torch
 import cv2
-from game import scoreboard
+#from game import scoreboard
 
 import gym 
 from gym import spaces 
@@ -25,6 +25,12 @@ def pre_processing(image, w=84, h=84):
     a = a / 255 # normalise the outputs # do not use for open ai gym
 
     return a #image[None, :, :].astype(np.float32)
+
+def scoreboard(count):
+
+    font = pygame.font.SysFont(None, 25)
+    text = font.render("Score: "+str(count), True, black)
+    gameDisplay.blit(text,(0,0))
 
 
 class DroneWars(gym.Env):
