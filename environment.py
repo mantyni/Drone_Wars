@@ -6,8 +6,6 @@ np.set_printoptions(threshold=np.inf)
 from pygame.surfarray import array3d
 import torch
 import cv2
-#from game import scoreboard
-
 import gym 
 from gym import spaces 
 

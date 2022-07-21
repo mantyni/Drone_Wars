@@ -32,6 +32,7 @@ episodes = 1 # Episodes to play after training
 
 out = cv2.VideoWriter("output/drone_wars.mp4", cv2.VideoWriter_fourcc(*"MJPG"), 60, (width, height))
 
+# Test playing for 1 episode:
 while episodes > 0:
     print("Playing")
     action, _states = model.predict(obs, deterministic=True)

@@ -25,24 +25,34 @@ Implementation description will be released soon.
 
 ## Instructions 
 
-To train the agent run:
+There are two implementations to train Double Q Network for Drone Wars, one using Stable Baselines 3 and another custom implementation from scratch using Pytorch. Currently custom network implementation lags behind Stable Baselines3 performance in training speed and agent scores, however, its custom implementation is more transparent and easier to undestand. 
+
+### Colab
+Use Colab notebooks to train the models:
+`drone_wars_custom_network.ipynb` - trains the model using custom Double Q network in Pytorch
+`drone_wars_stable_baselines.ipynb` - trains the model using Stable Baselines 3 
+
+To test the agent download use the scripts to play: 
+`python3 play.py` - plays the agent with custom network model
+`python3 play_stablebaselines` - plays the agent with Stable Baselines model
+
+### Python scripts
+Instead of Colab you can use Python scripts to train the models
 `python3 train.py`
-
-To train with the Openbaselines3 
-`python3 test_dqn.py`
-
-And to play the game with the trained RL agent run:
-`python3 play.py`
+`python3 train_stablebaselines_dqn.py`
 
 To play the game manually or with scripted AI run: 
 `python3 game.py`
 
 ## Requirements
-* python 3
+* python3
 * pygame
 * pygame-menu
-* pytorch
+* torch
 * numpy
+* stable_baselines3
+* gym
+* cv2
 
 
 ## Next development steps
