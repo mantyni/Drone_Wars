@@ -3,10 +3,8 @@ import random
 
 class Obstacle:
     def __init__(self, gameDisplay, display_width=800, display_height=600, *args, **kwargs):
-        #self.x = 0
-        #self.y = 0
         self.x = random.randrange(0, display_width)
-        self.y = -100 #random.randrange(-1300, -550) # display_height * (-1) # to give more space for obstacle to fully render
+        self.y = -100 # Give more space for obstacle to fully render
         self.speed = 40
         self.height = 100 # self.display_width / 8
         self.width = 100 # self.display_width / 6

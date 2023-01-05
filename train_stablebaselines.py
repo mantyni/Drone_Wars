@@ -15,24 +15,23 @@ env = DroneWars(gameDisplay, display_width=width, display_height=height, clock=c
 #model = DQN("MlpPolicy", env, buffer_size=10000, verbose=1) # can use either mlp or cnn policy
 
 # Uncomment below for training:
-model = DQN("CnnPolicy", env, buffer_size=30000, verbose=2)
+model = DQN("CnnPolicy", env, buffer_size=10000, verbose=2)
 model.learn(total_timesteps=300000, log_interval=5)
 model.save("dqn_dronewars")
 model.save_replay_buffer("dqn_replay_buffer")
-### 
+# End of training code 
 
-# Load model
+# Load trained model
 model = DQN.load("dqn_dronewars")
 model.load_replay_buffer("dqn_replay_buffer")
 print(f"The loaded_model has {model.replay_buffer.size()} transitions in its buffer")
 
 obs = env.reset()
 
-episodes = 1 # Episodes to play after training
+episodes = 1 # Number of episodes to play after training
 
 out = cv2.VideoWriter("output/drone_wars.mp4", cv2.VideoWriter_fourcc(*"MJPG"), 60, (width, height))
 
-# Test playing for 1 episode:
 while episodes > 0:
     print("Playing")
     action, _states = model.predict(obs, deterministic=True)

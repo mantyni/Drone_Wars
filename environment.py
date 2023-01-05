@@ -24,18 +24,13 @@ def pre_processing(image, w=84, h=84):
 
     return a #image[None, :, :].astype(np.float32)
 
-def scoreboard(count):
-
-    font = pygame.font.SysFont(None, 25)
-    text = font.render("Score: "+str(count), True, black)
-    gameDisplay.blit(text,(0,0))
-
 
 class DroneWars(gym.Env):
     def __init__(self, gameDisplay, display_width=800, display_height=600, clock=None, fps = 30, *args, **kwargs):
         super(DroneWars, self).__init__()
         self.my_drone1 = Drone(gameDisplay)
         self.my_drone1.x = display_width * 0.8
+        #self.my_drone1.x = display_width * 0.3
         self.my_drone1.y = display_height * 0.85 #
         self.my_drone2 = Drone(gameDisplay)
         self.my_drone2.x = display_width * 0.2
@@ -56,11 +51,11 @@ class DroneWars(gym.Env):
         self.obstacle_list = []
         self.n_actions = 9 # 3 actions per drone so it's 3^3 action space
         self.action_space = spaces.Discrete(self.n_actions)
-        #self.observation_space = spaces.Box(low=0, high=255, shape=(1, 84, 84), dtype=np.float32)
+        #self.observation_space = spaces.Box(low=0, high=255, shape=(1, 84, 84), dtype=np.float32) #use for custom NN without open baselines
         self.observation_space = spaces.Box(low=0, high=255, shape=(1,84,84), dtype=np.uint8) #needed for cnn policy for open baselines
         self.num_of_obstacles = 1 # nuber of obstacles
         
-        for n in range(0,self.num_of_obstacles):
+        for _ in range(0,self.num_of_obstacles):
             self.obstacle_list.append(Obstacle(gameDisplay))
 
         pygame.display.set_caption('Drone Wars')
@@ -84,13 +79,14 @@ class DroneWars(gym.Env):
         self.my_drone1.draw()
         self.my_drone2.draw()
 
-        scoreboard(self.score)
+        self.scoreboard(self.score)
         pygame.display.update()
 
-
+    # not being used
     def scoreboard(self, count):
+        self.black = (0,0,0)
         font = pygame.font.SysFont(None, 25)
-        text = font.render("Score: "+str(count), True, black)
+        text = font.render("Score: "+str(count), True, self.black)
         self.gameDisplay.blit(text,(0,0))
 
 
@@ -236,13 +232,12 @@ class DroneWars(gym.Env):
         state = pygame.display.get_surface() 
         state = array3d(state)
        
-        done = (not (reward > 0))
+        done = (not (reward > 0)) # False until reward becomes negative 
         info = {}
 
         if record:
             #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
-            return torch.from_numpy(pre_processing(state)), np.transpose(
-                cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info 
+            return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info 
         else:
-            return torch.from_numpy(pre_processing(state)), reward, done, info # Use for openbaselines
+            return torch.from_numpy(pre_processing(state)), reward, done, info # Use for openbaselines and custom network training
             #return pre_processing(state), reward, done, info # use for gym baselines

@@ -9,7 +9,7 @@ class DeepQNetwork(nn.Module):
         self.conv3 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1), nn.ReLU(inplace=True))
 
         self.fc1 = nn.Sequential(nn.Linear(7 * 7 * 64, 512), nn.ReLU(inplace=True)) # orig
-        self.fc2 = nn.Linear(512, 3)
+        self.fc2 = nn.Linear(512, 9)
         self._initialize_weights()
 
     def _initialize_weights(self):
