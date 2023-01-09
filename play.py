@@ -19,7 +19,7 @@ def get_args():
         ################################################################
          """)
     parser.add_argument("--saved_path", type=str, default="model")
-    parser.add_argument("--fps", type=int, default=60, help="frames per second")
+    parser.add_argument("--fps", type=int, default=200, help="frames per second")
     parser.add_argument("--output", type=str, default="output/drone_wars.mp4", help="the path to output video")
 
     args = parser.parse_args()
@@ -43,7 +43,7 @@ def play(opt):
         
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
-    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=30)
+    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=opt.fps)
     state, raw_state, _, _, _ = env.step(0, True)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :]
     

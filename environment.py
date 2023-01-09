@@ -53,7 +53,7 @@ class DroneWars(gym.Env):
         self.action_space = spaces.Discrete(self.n_actions)
         #self.observation_space = spaces.Box(low=0, high=255, shape=(1, 84, 84), dtype=np.float32) #use for custom NN without open baselines
         self.observation_space = spaces.Box(low=0, high=255, shape=(1,84,84), dtype=np.uint8) #needed for cnn policy for open baselines
-        self.num_of_obstacles = 1 # nuber of obstacles
+        self.num_of_obstacles = 2 # nuber of obstacles
         
         for _ in range(0,self.num_of_obstacles):
             self.obstacle_list.append(Obstacle(gameDisplay))
@@ -200,6 +200,7 @@ class DroneWars(gym.Env):
                 self.score += 1
 
         # Detect if drone1 left the display bounds, then game over
+        
         if self.out_of_bounds(self.my_drone1, self.display_width, self.display_height):
             reward = -1
             self.gameExit = True

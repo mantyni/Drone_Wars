@@ -1,3 +1,5 @@
+# Working training for multiple drones
+
 import argparse
 import os
 import random
@@ -9,7 +11,13 @@ import copy
 import pygame
 from nn_model import DeepQNetwork
 from environment import DroneWars
+
 from stable_baselines3.common.utils import polyak_update
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter('runs/drone_wars')
+# run tensorboard --logdir=runs
+# open localhost:6006 in browser to see tensorboard
 
 
 def get_args():
@@ -17,19 +25,18 @@ def get_args():
         """Reinforcement Learning Deep Q Network""")
     parser.add_argument("--batch_size", type=int, default=32, help="The number of images per batch") # was 64 # start at 8 increase up to 64 throught
     parser.add_argument("--optimizer", type=str, choices=["sgd", "adam"], default="adam")
-    parser.add_argument("--lr", type=float, default=1e-5) # From 1e-4 (at 300K) to 1e-5 (at 1M). 
+    parser.add_argument("--lr", type=float, default=1e-4) # From 1e-4 (at 300K) to 1e-5 (at 1M). 
     #parser.add_argument("--lr", type=float, default=1e-4) #orig
     parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--initial_epsilon", type=float, default=0.1)
+    parser.add_argument("--initial_epsilon", type=float, default=1.0)
     #parser.add_argument("--initial_epsilon", type=float, default=1e-3)
-    parser.add_argument("--final_epsilon", type=float, default=1e-5) # was 1e-5
+    parser.add_argument("--final_epsilon", type=float, default=1e-3) # was 1e-5
     #parser.add_argument("--final_epsilon", type=float, default=1e-2)
-    parser.add_argument("--num_decay_iters", type=float, default=300000) #was 1000000
-    parser.add_argument("--num_iters", type=int, default=1000000) # was 1000000
+    parser.add_argument("--num_decay_iters", type=float, default=500000) #was 1000000
+    parser.add_argument("--num_iters", type=int, default=600000) # was 1000000
     # Replay memory size must not exeed available RAM, otherwise will crash
     # 10000 = 1Gb
-    parser.add_argument("--replay_memory_size", type=int, default=10000, 
-                        help="Number of epochs between testing phases") # was 20000
+    parser.add_argument("--replay_memory_size", type=int, default=10000, help="Size of the memory buffer") # was 20000
     parser.add_argument("--saved_folder", type=str, default="model")
     parser.add_argument("--render", type=bool, default=True) 
 
@@ -44,18 +51,20 @@ def train(opt):
     flags = pygame.SHOWN
     gameDisplay = pygame.display.set_mode((800,600), flags) 
     tau = 0.001
-    update_starts = 50000
+    update_starts = 1
     updated = False
     log_update = False
-    model_update_rate = 10 # number of episodes
+    model_update_rate = 5 # number of episodes
     episodes = 0
     returns = []
     rewards = []
     scores = []
-    ep_scores = []
+    ep_score = []
+    ep_memory = []
     all_scores = np.array(1)
     lr = opt.lr
     max_grad_norm = 10.0
+    top_score = 0
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
@@ -133,6 +142,7 @@ def train(opt):
         2 : [0,0,1],
     }
     """
+    #optimizer.param_groups[0]['lr'] = 0.00001
     while iter < opt.num_iters:
 
         if torch.cuda.is_available():
@@ -145,15 +155,15 @@ def train(opt):
         # Exploration or exploitation, epislon decay
         #epsilon = opt.final_epsilon + (max(opt.num_decay_iters - iter, 0) * (opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_iters)
         #epsilon = 0.01
-        #if iter % 1000 == 0 and lr > 1e-4:
-        #    lr = lr * 0.99
-        #    optimizer.param_groups[0]['lr'] = lr
-                    
+        if iter == 100000 or iter == 300000:
+            lr = lr * 0.1
+            optimizer.param_groups[0]['lr'] = lr
 
+        
         if iter < update_starts:
             epsilon = 0.95
         else:
-            epsilon = 0.01
+            epsilon = 0.05
         
         u = random.random()
         random_action = u <= epsilon
@@ -166,7 +176,18 @@ def train(opt):
 
         next_state, reward, done, _ = env.step(action)
         next_state = torch.cat((state[0, 1:, :, :], next_state))[None, :, :, :]
+
         replay_memory.append([state, action, reward, next_state, done])
+
+        
+        # uncomment for testing memory buffer with quality episodes
+        """
+        if iter < update_starts:
+            replay_memory.append([state, action, reward, next_state, done])
+        else:
+            ep_memory.append([state, action, reward, next_state, done])
+        """
+
         
         if len(replay_memory) > opt.replay_memory_size:
             del replay_memory[0]
@@ -184,6 +205,7 @@ def train(opt):
             reward_batch = reward_batch.cuda()
             next_state_batch = next_state_batch.cuda()
         
+        """
         if iter < update_starts:
             current_prediction_batch = model(state_batch)
             next_prediction_batch = model(next_state_batch)
@@ -191,16 +213,19 @@ def train(opt):
             #current_prediction_batch = model_target(state_batch)
             #next_prediction_batch = model_target(next_state_batch)
             current_prediction_batch = model(state_batch)
-            next_prediction_batch = model(next_state_batch)
-        
-        #with torch.no_grad: # not sure if needed...
-        #current_prediction_batch = model(state_batch)
-        #next_prediction_batch = model(next_state_batch)
+            #next_prediction_batch = model(next_state_batch)
+            next_prediction_batch = model_target(next_state_batch) # next q values are calculated using target network
+        """
+        with torch.no_grad(): 
+            next_prediction_batch = model_target(next_state_batch)
+
+        current_prediction_batch = model(state_batch)
 
         y_batch = torch.cat(tuple(reward if done else reward + opt.gamma * torch.max(prediction) for reward, done, prediction in
                   zip(reward_batch, done_batch, next_prediction_batch)))
 
         q_value = torch.sum(current_prediction_batch * action_batch, dim=1)
+        
         optimizer.zero_grad()
         loss = criterion(q_value, y_batch)
         loss.backward()
@@ -215,6 +240,19 @@ def train(opt):
         rewards.append(reward)
         scores.append(score)
         all_scores = np.append(all_scores, score)
+        if score > top_score:
+            top_score = score
+
+        # Log to tensorboard
+        writer.add_scalar('training loss', loss.item(), iter) 
+        writer.add_scalar('score', score, iter) 
+        writer.add_scalar('rewards', reward, iter) 
+
+        # episodic scores (not needed anymore)
+        if not done:
+            ep_score = copy.deepcopy(score)
+
+        #print(f"Episode Score: {ep_score:.4f}")
 
         # Increment episode if done
         if done:
@@ -223,6 +261,18 @@ def train(opt):
             log_update = False
             returns.append(np.sum(rewards)) # mean of returns of each episode
             rewards = []
+            
+            """
+            # uncomment for testing memory buffer with quality episodes
+            if iter > update_starts:
+                if ep_score >= 10:
+                    print("* Adding to memory - len of ep_memory", len(ep_memory))
+                    print("Length of replay_memory: ", len(replay_memory))
+                    for s, a, r, n, d in ep_memory:
+                        replay_memory.append([s,a,r,n,d])
+            """
+            ep_memory = []
+            ep_score = 0
 
         # Print logs
         if (episodes % 5 == 0 and log_update == False):
@@ -233,10 +283,11 @@ def train(opt):
                 print(f"Status: Training")
             print(f"Step: {iter+1}/{opt.num_iters}")
             print(f"Loss: {loss:.5f}")
-            print(f"LR: {optimizer.param_groups[0]['lr']:.5f}")
+            print(f"LR: {optimizer.param_groups[0]['lr']:.6f}")
             print(f"Epsilon: {epsilon:.4f}")
             print(f"Mean Episode Return: {np.mean(returns):.4f}")
             print(f"Mean Episode Score: {np.mean(scores):.4f}")
+            print(f"Top score: {top_score}")
             print()
 
             log_update = True
@@ -254,16 +305,6 @@ def train(opt):
             print()
             print("### Updating target network ###")
             print()
-            #print(f"Episode: {episodes}")
-            #print(f"Step: {iter+1}/{opt.num_iters}")
-            #print(f"Loss: {loss:.5f}")
-            #print(f"LR: {optimizer.param_groups[0]['lr']:.5f}")
-            #print(f"Epsilon: {epsilon:.4f}")
-            #print(f"Mean Reward: {np.mean(rewards):.4f}")
-            #print(f"Mean Score: {np.mean(scores):.4f}")
-            #print()
-            
-
 
         # Save model
         if (iter + 1) % 20000 == 0:
