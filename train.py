@@ -21,22 +21,16 @@ writer = SummaryWriter('runs/drone_wars')
 
 
 def get_args():
-    parser = argparse.ArgumentParser(
-        """Reinforcement Learning Deep Q Network""")
-    parser.add_argument("--batch_size", type=int, default=32, help="The number of images per batch") # was 64 # start at 8 increase up to 64 throught
+    parser = argparse.ArgumentParser("""Reinforcement Learning Deep Q Network""")
+    parser.add_argument("--batch_size", type=int, default=32, help="The number of images per batch") 
     parser.add_argument("--optimizer", type=str, choices=["sgd", "adam"], default="adam")
-    parser.add_argument("--lr", type=float, default=1e-4) # From 1e-4 (at 300K) to 1e-5 (at 1M). 
-    #parser.add_argument("--lr", type=float, default=1e-4) #orig
+    parser.add_argument("--lr", type=float, default=1e-4) 
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--initial_epsilon", type=float, default=1.0)
-    #parser.add_argument("--initial_epsilon", type=float, default=1e-3)
-    parser.add_argument("--final_epsilon", type=float, default=1e-3) # was 1e-5
-    #parser.add_argument("--final_epsilon", type=float, default=1e-2)
-    parser.add_argument("--num_decay_iters", type=float, default=500000) #was 1000000
-    parser.add_argument("--num_iters", type=int, default=600000) # was 1000000
-    # Replay memory size must not exeed available RAM, otherwise will crash
-    # 10000 = 1Gb
-    parser.add_argument("--replay_memory_size", type=int, default=10000, help="Size of the memory buffer") # was 20000
+    parser.add_argument("--final_epsilon", type=float, default=1e-3) 
+    parser.add_argument("--num_decay_iters", type=float, default=500000) 
+    parser.add_argument("--num_iters", type=int, default=1000000) # Replay memory must not exeed available RAM, otherwise will crash, 10000 = 1Gb
+    parser.add_argument("--replay_memory_size", type=int, default=10000, help="Size of the memory buffer") 
     parser.add_argument("--saved_folder", type=str, default="model")
     parser.add_argument("--render", type=bool, default=True) 
 
@@ -50,8 +44,7 @@ def train(opt):
     clock = pygame.time.Clock()
     flags = pygame.SHOWN
     gameDisplay = pygame.display.set_mode((800,600), flags) 
-    tau = 0.001
-    update_starts = 1
+    update_starts = 1 # Steps when to start updating target network
     updated = False
     log_update = False
     model_update_rate = 5 # number of episodes
@@ -59,31 +52,35 @@ def train(opt):
     returns = []
     rewards = []
     scores = []
-    ep_score = []
-    ep_memory = []
+
     all_scores = np.array(1)
     lr = opt.lr
     max_grad_norm = 10.0
     top_score = 0
+
+    ep_score = []
+    ep_memory = []
+    tau = 0.001
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
 
-    model = DeepQNetwork() # need to add a target network, initialy it's a copy # read more https://blog.gofynd.com/building-a-deep-q-network-in-pytorch-fa1086aa5435
-                            # update every 5 steps
-    model_target = copy.deepcopy(model) # Target network will be updated. Target should be just a copy
+    model = DeepQNetwork() # Main network - evaluation policy
+    model_target = copy.deepcopy(model) # Target network - behavior policy
 
     if torch.cuda.is_available():
         model.cuda()
         model_target.cuda()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
-    optimizer.param_groups[0]['lr'] = opt.lr
+    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, step_size=1500000, gamma=0.1) # TODO Learning rate scheduler 
+
 
     if not os.path.isdir(opt.saved_folder):
         os.makedirs(opt.saved_folder)
+
     checkpoint_path = os.path.join(opt.saved_folder, "drone_wars.pth")
     memory_path = os.path.join(opt.saved_folder, "replay_memory.pkl")
 
@@ -108,7 +105,7 @@ def train(opt):
     criterion = nn.MSELoss()
     #criterion = nn.SmoothL1Loss() # stablebaselines dqn is using huber loss
 
-    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=200)
+    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=200, num_drones=2, num_obstacles=2)
 
     state, _, _, _ = env.step(0)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :] # copies same state over for 4 times
@@ -142,7 +139,8 @@ def train(opt):
         2 : [0,0,1],
     }
     """
-    #optimizer.param_groups[0]['lr'] = 0.00001
+
+    # Training loop:
     while iter < opt.num_iters:
 
         if torch.cuda.is_available():
@@ -152,19 +150,20 @@ def train(opt):
             #prediction = model(state)[0]
             prediction = model_target(state)[0]
                 
-        # Exploration or exploitation, epislon decay
+        # Epislon decay:
         #epsilon = opt.final_epsilon + (max(opt.num_decay_iters - iter, 0) * (opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_iters)
-        #epsilon = 0.01
-        if iter == 100000 or iter == 300000:
-            lr = lr * 0.1
-            optimizer.param_groups[0]['lr'] = lr
-
         
+        # Large epsilon at the begining to force agent explore
+        # For this environment exploration is not necessary, training with epsilon = 0.01 all the time works best
         if iter < update_starts:
             epsilon = 0.95
         else:
-            epsilon = 0.05
-        
+            epsilon = 0.01
+
+        if iter == 100000 or iter == 300000:
+            lr = lr * 0.1
+            optimizer.param_groups[0]['lr'] = lr
+       
         u = random.random()
         random_action = u <= epsilon
 
@@ -274,7 +273,7 @@ def train(opt):
             ep_memory = []
             ep_score = 0
 
-        # Print logs
+        # Print logs every few episodes
         if (episodes % 5 == 0 and log_update == False):
             print(f"Episode: {episodes}")
             if iter < update_starts:
@@ -295,24 +294,18 @@ def train(opt):
             scores = []
 
 
-        # Update target network
-        if (iter > update_starts) and ((episodes) % model_update_rate == 0) and (updated == False): #problem keeps updating until next episode 
-        #if (iter > update_starts) and (iter % model_update_rate == 0) and (updated == False): #problem keeps updating until next episode 
+        # Update target network based on 'model_update_rate'
+        if (iter > update_starts) and ((episodes) % model_update_rate == 0) and (updated == False):
             
-            #polyak_update(model.parameters(), model_target.parameters(), tau)
-            model_target = copy.deepcopy(model) # same as above, copy over params from main network to target network
+            #polyak_update(model.parameters(), model_target.parameters(), tau) # Use for soft copy of params
+            model_target = copy.deepcopy(model) # Hard copy params from main network to target network
             updated = True
-            print()
-            print("### Updating target network ###")
-            print()
+            print("\n ### Updating target network ### \n")
 
-        # Save model
+        # Save model every 20k iterations
         if (iter + 1) % 20000 == 0:
-            checkpoint = {"iter": iter,
-                          "model_state_dict": model.state_dict(),
-                          "optimizer": optimizer.state_dict()}
+            checkpoint = {"iter": iter, "model_state_dict": model.state_dict(), "optimizer": optimizer.state_dict()}
             torch.save(checkpoint, checkpoint_path)
-
             print("## Saving model. Average Score: ", np.mean(all_scores))
             all_scores = np.array(1) # Reset all_scores list
 
@@ -322,5 +315,5 @@ def train(opt):
 
 if __name__ == "__main__":
     opt = get_args()
-    print("Opt", opt)
+    print(f"Parameters: {' '.join(f'{k}={v}' for k, v in vars(opt).items())}")
     train(opt)

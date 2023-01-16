@@ -18,9 +18,9 @@ def get_args():
         ### Reinforcement Learning Deep Q Network Playing Drone Wars ###
         ################################################################
          """)
-    parser.add_argument("--saved_path", type=str, default="model")
-    parser.add_argument("--fps", type=int, default=200, help="frames per second")
-    parser.add_argument("--output", type=str, default="output/drone_wars.mp4", help="the path to output video")
+    parser.add_argument("--saved_path", type=str, default="./model")
+    parser.add_argument("--fps", type=int, default=100, help="frames per second")
+    parser.add_argument("--output", type=str, default="./output/drone_wars.mp4", help="the path to output video")
 
     args = parser.parse_args()
     return args
@@ -69,4 +69,5 @@ def play(opt):
 
 if __name__ == "__main__":
     opt = get_args()
+    print(f"Parameters: {' '.join(f'{k}={v}' for k, v in vars(opt).items())}")
     play(opt)
