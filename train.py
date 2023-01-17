@@ -33,7 +33,9 @@ def get_args():
     parser.add_argument("--replay_memory_size", type=int, default=10000, help="Size of the memory buffer") 
     parser.add_argument("--saved_folder", type=str, default="model")
     parser.add_argument("--render", type=bool, default=True) 
-
+    parser.add_argument("--num_drones", type=int, default=2) 
+    parser.add_argument("--num_obstacles", type=int, default=2) 
+    
     args = parser.parse_args()
     return args
 
@@ -105,7 +107,7 @@ def train(opt):
     criterion = nn.MSELoss()
     #criterion = nn.SmoothL1Loss() # stablebaselines dqn is using huber loss
 
-    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=200, num_drones=2, num_obstacles=2)
+    env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=200, num_drones=opt.num_drones, num_obstacles=opt.num_obstacles)
 
     state, _, _, _ = env.step(0)
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :] # copies same state over for 4 times

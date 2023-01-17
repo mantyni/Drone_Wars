@@ -8,8 +8,8 @@ class DeepQNetwork(nn.Module):
         self.conv2 = nn.Sequential(nn.Conv2d(32, 64, kernel_size=4, stride=2), nn.ReLU(inplace=True))
         self.conv3 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1), nn.ReLU(inplace=True))
 
-        self.fc1 = nn.Sequential(nn.Linear(7 * 7 * 64, 2056), nn.ReLU(inplace=True)) # orig 512
-        self.fc2 = nn.Linear(2056, 9)
+        self.fc1 = nn.Sequential(nn.Linear(7 * 7 * 64, 512), nn.ReLU(inplace=True)) # orig 512
+        self.fc2 = nn.Linear(512, 9)
         self._initialize_weights()
 
     def _initialize_weights(self):

@@ -19,9 +19,9 @@ def pre_processing(image, w=84, h=84):
     #cv2.imwrite("bw.jpg", image)
 
     
-    a = image[None, :, :].astype(np.uint8) # use for open ai baselines
+    #a = image[None, :, :].astype(np.uint8) # use for open ai baselines
     a = np.array(image[None, :, :]).astype(np.float32) # custom nn
-    #a = a / 255 # normalise the outputs # custom nn. do not use for open ai gym
+    a = a / 255 # normalise the outputs # custom nn. do not use for open ai gym
 
     return a #image[None, :, :].astype(np.float32)
 
@@ -67,8 +67,8 @@ class DroneWars(gym.Env):
 
 
     def reset(self):
-        #r = np.zeros((1,84,84)).astype(np.float32) # use for custom model
-        r = np.zeros((1,84,84)).astype(np.uint8) # use for openbaselines. TODO check why works fine for custom model
+        r = np.zeros((1,84,84)).astype(np.float32) # use for custom model
+        #r = np.zeros((1,84,84)).astype(np.uint8) # use for openbaselines. TODO check why works fine for custom model
         return r
 
 
@@ -243,8 +243,8 @@ class DroneWars(gym.Env):
         info = {}
 
         if record:
-            return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
-            #return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info  # custom training network
+            #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
+            return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info  # custom training network
         else:
-            #return torch.from_numpy(pre_processing(state)), reward, done, info # Use for custom network training
-            return pre_processing(state), reward, done, info # use for gym baselines
+            return torch.from_numpy(pre_processing(state)), reward, done, info # Use for custom network training
+            #return pre_processing(state), reward, done, info # use for gym baselines
