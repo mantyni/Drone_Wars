@@ -19,10 +19,13 @@ class Drone:
         #self.img = pygame.transform.scale(self.img, (int(self.display_width*0.05),int(self.display_height*0.06)))
 
         if drone_id == 0: # assign drone positions on the screen
-            self.x = display_height * 0.8
+            self.x = display_width * 0.8
         if drone_id == 1:
-            self.x = display_height * 0.2
+            self.x = display_width * 0.2
 
+        # testing:
+        if drone_id == 1:
+            self.y = display_height * 0.7
 
     def move_left(self):
         self.x_change = -self.drone_speed
