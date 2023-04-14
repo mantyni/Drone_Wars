@@ -62,7 +62,7 @@ def play(opt):
         model2.cuda()
         state = state.cuda()
         
-    #out = cv2.VideoWriter(opt.output, cv2.VideoWriter_fourcc(*"MJPG"), opt.fps, (800, 600))
+    out = cv2.VideoWriter(opt.output, cv2.VideoWriter_fourcc(*"MJPG"), opt.fps, (800, 600))
     done = [False, False]
     
     while not done[0] or not done[1]:
@@ -74,7 +74,7 @@ def play(opt):
         action2 = torch.argmax(prediction2).item()
 
         next_state, raw_next_state, reward, done, info = env.step(action1, action2, True)
-        #out.write(raw_next_state)
+        out.write(raw_next_state)
         
         if torch.cuda.is_available():
             next_state = next_state.cuda()

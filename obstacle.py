@@ -11,7 +11,7 @@ class Obstacle:
         self.display_width = display_width
         self.display_height = display_height
         self.gameDisplay = gameDisplay
-        self.img = pygame.image.load('images/asteroid.png').convert() 
+        self.img = pygame.image.load('images/asteroid.png') #.convert() # comment out convert for nice png
         self.img = pygame.transform.scale(self.img, (int(self.display_width*0.16),int(self.display_height*0.2)))
         #self.img = pygame.transform.scale(self.img, (int(self.display_width*0.08),int(self.display_height*0.1)))
 

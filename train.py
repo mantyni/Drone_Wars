@@ -1,5 +1,3 @@
-# Working training for multiple drones
-
 import argparse
 import os
 import random
@@ -9,11 +7,12 @@ import torch
 import torch.nn as nn
 import copy
 import pygame
+from stable_baselines3.common.utils import polyak_update
+from torch.utils.tensorboard import SummaryWriter
+
 from nn_model import DeepQNetwork
 from environment import DroneWars
 
-from stable_baselines3.common.utils import polyak_update
-from torch.utils.tensorboard import SummaryWriter
 
 writer = SummaryWriter('runs/drone_wars')
 # run tensorboard --logdir=runs
@@ -21,7 +20,7 @@ writer = SummaryWriter('runs/drone_wars')
 
 
 def get_args():
-    parser = argparse.ArgumentParser("""Reinforcement Learning Deep Q Network""")
+    parser = argparse.ArgumentParser("""Drone Wars Game""")
     parser.add_argument("--batch_size", type=int, default=32, help="The number of images per batch") 
     parser.add_argument("--optimizer", type=str, choices=["sgd", "adam"], default="adam")
     parser.add_argument("--lr", type=float, default=1e-4) 
@@ -139,12 +138,12 @@ def train(opt):
     # [None, :, :, :] doesnt do anything...
     # uses 4 channels, coppies sames state info 4 times? # can change in nn to 2 channels
     
-    """
-    a = np.eye(9, dtype=int)
-    actions = {}
-    for n in range(9):
-        actions[n] = a[n]
-    """
+    
+    a = np.eye(3, dtype=int)
+    action_dict = {}
+    for n in range(3):
+        action_dict[n] = a[n]
+    
     """
     # multiple drones
     action_dict = {
@@ -158,14 +157,14 @@ def train(opt):
         7 : [0,0,0,0,0,0,0,1,0],
         8 : [0,0,0,0,0,0,0,0,1] 
     }
-    """
+    
     # one drone
     action_dict = {
         0 : [1,0,0],
         1 : [0,1,0], 
         2 : [0,0,1],
     }
-    
+    """
 
     # Training loop:
     while iter < opt.num_iters:
