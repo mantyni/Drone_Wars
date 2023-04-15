@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Script to convert movie files to a gif
+
 if [ $# -eq 0 ]
   then
     echo "Input media file is missing!" 

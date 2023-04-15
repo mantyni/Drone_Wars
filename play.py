@@ -19,7 +19,7 @@ def get_args():
         ### Reinforcement Learning Deep Q Network Playing Drone Wars ###
         ################################################################
          """)
-    parser.add_argument("--fps", type=int, default=200, help="frames per second")
+    parser.add_argument("--fps", type=int, default=60, help="frames per second")
     parser.add_argument("--output", type=str, default="./output/drone_wars.mp4", help="the path to output video")
     parser.add_argument("--record", type=bool, default=True, help="record output video")
     
