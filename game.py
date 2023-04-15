@@ -5,13 +5,12 @@ import pygame
 import time
 import random
 from drone import Drone
-from obstacle import Obstacle
+from asteroid import Obstacle
 from pygame_functions import *
 import pygame_menu
 from random import randrange, choice, randint
 import numpy as np
 from pygame.surfarray import array3d
-import cv2
 
 pygame.init()
 

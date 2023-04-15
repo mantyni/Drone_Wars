@@ -5,11 +5,10 @@ import numpy as np
 import gym 
 
 from drone import Drone
-from obstacle import Obstacle
+from asteroid import Asteroid
 
 
 def pre_processing(image, w=84, h=84, out=False):
-    
     image_orig = image[:800, 20:, :] # crop out the top so score is not visible
     image_color = cv2.cvtColor(cv2.resize(image_orig, (w, h)), cv2.COLOR_BGR2GRAY)
     _, image_bw = cv2.threshold(image_color, 127, 255, cv2.THRESH_BINARY)
@@ -19,11 +18,10 @@ def pre_processing(image, w=84, h=84, out=False):
         cv2.imwrite("bw.jpg", image_bw) # save black and white image
         cv2.imwrite("color.jpg", image_color) # save colored image
 
-    # For open ai baselines:
+    # Uncomment below for open ai baselines:
     #a = image_bw[None, :, :].astype(np.uint8) 
-    #return image_bw[None, :, :].astype(np.float32)
     
-    # For custom network
+    # Uncomment below for custom network
     a = np.array(image_bw[None, :, :]).astype(np.float32) 
     a = a / 255 # normalise the outputs 
 
@@ -33,8 +31,8 @@ def pre_processing(image, w=84, h=84, out=False):
 class DroneWars(gym.Env):
     
     def __init__(self, gameDisplay, display_width=800, display_height=600, clock=None, fps = 30, num_drones = 2, num_obstacles = 2, *args, **kwargs):
-        #super(DroneWars, self).__init__()
-
+        super().__init__()
+        
         self.gameDisplay = gameDisplay
         self.display_width = display_width
         self.display_height = display_height
@@ -64,7 +62,7 @@ class DroneWars(gym.Env):
             self.drone_list.append(Drone(gameDisplay, drone_id=i))
 
         for i in range(self.num_of_obstacles):
-            self.obstacle_list.append(Obstacle(gameDisplay))
+            self.obstacle_list.append(Asteroid(gameDisplay))
 
         pygame.display.set_caption('Drone Wars')
         
@@ -151,7 +149,6 @@ class DroneWars(gym.Env):
         if action2 == 2:
             self.drone_list[1].move_right()       
         
-
         # Update drone 1 & 2 position 
         for drn in self.drone_list:
             drn.update()
@@ -196,10 +193,8 @@ class DroneWars(gym.Env):
         info = {}
         
         if record:
-            #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
-            #return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info  # custom training network
             return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), self.reward_list, self.done_list, info  # custom training network
+            #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
         else:
             return torch.from_numpy(pre_processing(state)), self.reward_list, self.done_list, info # Use for custom network training
-            #return torch.from_numpy(pre_processing(state)), reward, done, info # Use for custom network training
             #return pre_processing(state), reward, done, info # use for gym baselines

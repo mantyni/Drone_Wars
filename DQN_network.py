@@ -1,13 +1,12 @@
 import torch.nn as nn
 
-class DeepQNetwork(nn.Module):
+class DQN_network(nn.Module):
+    
     def __init__(self):
-        super(DeepQNetwork, self).__init__()
-
+        super().__init__()
         self.conv1 = nn.Sequential(nn.Conv2d(4, 32, kernel_size=8, stride=4), nn.ReLU(inplace=True))
         self.conv2 = nn.Sequential(nn.Conv2d(32, 64, kernel_size=4, stride=2), nn.ReLU(inplace=True))
         self.conv3 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1), nn.ReLU(inplace=True))
-
         self.fc1 = nn.Sequential(nn.Linear(7 * 7 * 64, 512), nn.ReLU(inplace=True)) # orig 512
         self.fc2 = nn.Linear(512, 3)
         self._initialize_weights()

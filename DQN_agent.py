@@ -5,11 +5,12 @@ import pickle
 import random
 import numpy as np
 
-from nn_model import DeepQNetwork
+from DQN_network import DQN_network
 
 from torch.utils.tensorboard import SummaryWriter
 # run tensorboard --logdir=runs
 # open localhost:6006 in browser to see tensorboard
+
 
 writer = SummaryWriter('runs/drone_wars')
 
@@ -22,9 +23,10 @@ class DQN_agent():
         self.batch_size = 32
         self.lr = 1e-4
         self.gamma = 0.99
+        self.replay_memory = []
         self.replay_memory_size = 10000
         self.update_starts = 5000
-        self.main_network = DeepQNetwork() # Main network - evaluation policy
+        self.main_network = DQN_network() # Main network - evaluation policy
         self.target_network = copy.deepcopy(self.main_network) # Target network - behavior policy
         self.save_folder = 'model'
         self.save_model_name = 'agent_' + str(id) + '.pth'
@@ -149,7 +151,6 @@ class DQN_agent():
                 prediction = self.target_network(observation)[0]
                 
         return torch.argmax(prediction).item()
-       
        
     def train(self, current_state, action, next_state, reward, done):
         
