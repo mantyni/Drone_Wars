@@ -32,7 +32,7 @@ Excuse the graphics, the models need to be retrained to play with a round versio
 
 ## Instructions 
 
-There are two implementations to train Double Q Network for Drone Wars, one using Stable Baselines 3 and another custom implementation from scratch using Pytorch. ~~Currently custom network implementation lags behind Stable Baselines3 performance in training speed and agent scores, however, its custom implementation is more transparent and easier to undestand. ~~ The current DQN implementation outperforms Stabe Baselines 3 - reaches higher scores and is easier to understand.  
+There are two implementations to train Double Q Network for Drone Wars, one using Stable Baselines 3 and another custom implementation from scratch using Pytorch. The current DQN implementation outperforms Stabe Baselines 3 - reaches higher scores and is easier to understand.  
 
 
 ### Python scripts
