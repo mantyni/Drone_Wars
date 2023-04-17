@@ -21,16 +21,15 @@ def train():
     num_drones = 2
     drone_list = []
     action_list = []
-    num_iterations = 400000 
-    iter = 0
+    num_iterations = 403000 
+    
     
     # Initiatlize DQN agents
     for n in range(num_drones):
         drone_list.append(DQN_agent(id=n, train_mode=True, total_iterations=num_iterations))
 
     # Train the agents
-    while iter < num_iterations:
-        iter +=1 
+    while drone_list[0].iter < num_iterations:
         
         for drn in drone_list:
             action_list.append(drn.predict(state, train=True))

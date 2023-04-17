@@ -79,7 +79,7 @@ class DQN_agent():
             self.target_network.load_state_dict(self.checkpoint["model_state_dict"])
             self.optimizer.load_state_dict(self.checkpoint["optimizer"])
             print(f"Agent {self.id} loaded trained model from iteration {self.iter}")
-            print(f"Learning rate: {self.optimizer.param_groups[0]['lr']}") # Model will load the last learning rate used!
+            print(f"Learning rate: {self.optimizer.param_groups[0]['lr']:.6f}") # Model will load the last learning rate used!
         else:
             self.iter = 0
             print("Started training new model")

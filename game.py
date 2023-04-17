@@ -5,8 +5,7 @@ import pygame
 import time
 import random
 from drone import Drone
-from asteroid import Obstacle
-from pygame_functions import *
+from asteroid import Asteroid
 import pygame_menu
 from random import randrange, choice, randint
 import numpy as np
