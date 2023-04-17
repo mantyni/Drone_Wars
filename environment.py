@@ -54,8 +54,8 @@ class DroneWars(gym.Env):
         self.num_of_drones = num_drones
         self.obstacle_list = []
         self.drone_list = []
-        self.reward_list = [0,0]
-        self.done_list = [False, False]
+        #self.reward_list = [0,0]
+        #self.done_list = [False, False]
 
         # Construct drone and obstacle objects
         for i in range(self.num_of_drones):
@@ -117,37 +117,18 @@ class DroneWars(gym.Env):
                     
                     return True   
 
-    def step(self, action1, action2, record=False): # 0: do nothing, 1: go left, 2: go right
-
-        self.reward_list = [0.1,0.1] # initialize reward for each drone
+    def step(self, actions, record=False): # 0: do nothing, 1: go left, 2: go right
+        reward_list = [0.1,0.1]
+        done_list = [False, False]
         
+        # Execute drone actions
         for drn in self.drone_list:
-            drn.reward = 0.1
-        
-        # Implement:
-        #for drn in self.drone_list:
-            #for a in self.actions:
-
-        # For single drone actions in decentralized environment
-        # first drone actions
-        if action1 == 0:
-            self.reward_list[0] += 0.01
-
-        if action1 == 1:
-            self.drone_list[0].move_left()       
-
-        if action1 == 2:
-            self.drone_list[0].move_right()       
-        
-        # second drone actions
-        if action2 == 0:
-            self.reward_list[1] += 0.01
-
-        if action2 == 1:
-            self.drone_list[1].move_left()       
-
-        if action2 == 2:
-            self.drone_list[1].move_right()       
+            if actions[drn.id] == 0:
+                reward_list[drn.id] = 0.01
+            if actions[drn.id] == 1:
+                self.drone_list[drn.id].move_left() 
+            if actions[drn.id] == 2:
+                self.drone_list[drn.id].move_right()      
         
         # Update drone 1 & 2 position 
         for drn in self.drone_list:
@@ -161,21 +142,21 @@ class DroneWars(gym.Env):
         for obs in self.obstacle_list:
             if obs.y > self.display_height:
                 obs.reset()
-                self.reward_list[0] += 1 # should reward increment or be 1
-                self.reward_list[1] += 1
+                reward_list[0] = 1 # should reward increment or be 1
+                reward_list[1] = 1
                 self.score += 1
 
-        # Detect if drone1 left the display bounds, then game over
+        # Detect if drone left the display bounds, then game over
         for drn in self.drone_list:
             if self.out_of_bounds(drn, self.display_width, self.display_height):
-                self.reward_list[drn.id] = -1
+                reward_list[drn.id] = -1
                 self.gameExit = True
 
-        # Detect when obstacle collides with the drone1 and reduce the score 
+        # Detect when obstacle collides with the drone, then game over or reduce the score 
         for drn in self.drone_list:
             if self.collision_multi(drn, self.obstacle_list):
                 self.score -= 1 
-                self.reward_list[drn.id] = -1
+                reward_list[drn.id] = -1
                 self.gameExit = True
 
         self.render()
@@ -188,13 +169,13 @@ class DroneWars(gym.Env):
         state = pygame.display.get_surface() 
         state = pygame.surfarray.array3d(state)
         
-        self.done_list[0] = (not (self.reward_list[0] > 0))
-        self.done_list[1] = (not (self.reward_list[1] > 0))
+        done_list[0] = (not (reward_list[0] > 0))
+        done_list[1] = (not (reward_list[1] > 0))
         info = {}
         
         if record:
-            return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), self.reward_list, self.done_list, info  # custom training network
+            return torch.from_numpy(pre_processing(state)), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward_list, done_list, info  # custom training network
             #return pre_processing(state), np.transpose(cv2.cvtColor(state, cv2.COLOR_RGB2BGR), (1, 0, 2)), reward, done, info # Use for openbaselines
         else:
-            return torch.from_numpy(pre_processing(state)), self.reward_list, self.done_list, info # Use for custom network training
+            return torch.from_numpy(pre_processing(state)), reward_list, done_list, info # Use for custom network training
             #return pre_processing(state), reward, done, info # use for gym baselines

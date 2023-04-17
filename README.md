@@ -24,8 +24,7 @@ The agent is trained to control 2 drones in a centralised fashion (same policy c
 
 
 ## Fourth iteration, Decentralized Reinforcement Learning with Double Deep Q method and multiple drones
-There are two independed agents that are trained in a decentralized fashion. This method achieves the best scores and is most robust. Each agent has it's own policy with 3 actions, but training is taking almost as long as centralized method due to resource constraints (multiple networks running concurently). 
-Excuse the graphics, the models need to be retrained to play with a round version of the asteroid icon (takes more resources). The network learned how to avoid square asteroids, but it doesn't reach good scores with slightly rounded icons! 
+There are two independed agents that are trained in a decentralized fashion. This method achieves the best scores and is most robust. Each agent has it's own policy with 3 actions. Training is taking slightly longer as centralized method due to resource constraints (multiple networks running concurently). 
 
 ![Alt text](images/gameplay_rl_3.gif "Gameplay_Multi_Agent_RL")
 
@@ -66,6 +65,7 @@ Colab notebooks will be provided soon.
 
 ## Next development steps
 * Improve the game 
+    * Add cooperative actions for drones
     * The drone can shoot asteroids
     * Add top scores to the menu
     * Add different types of asteroids
@@ -73,6 +73,7 @@ Colab notebooks will be provided soon.
 * Improve AI
     * ~~Improve RL method to reach higher scores~~
 * Multi-agent 
+    * Make drones coordinate and work together
     * ~~Make the game multi-agent so more than 1 drone is playing~~
     * ~~Adapt RL method for multi-agent game setting~~
 

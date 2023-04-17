@@ -30,30 +30,32 @@ def get_args():
 def play(opt):
     num_drones = 2
     drone_list = []
+    done_list = [False, False]
+    
     # Initiatlize environment
     env = DroneWars(gameDisplay, display_width=800, display_height=600, clock=clock, fps=opt.fps, num_drones=num_drones, num_obstacles=2)
+    
     # Initialize drones
     for x in range(num_drones):
         drone_list.append(DQN_agent(id=x))
     
-    state, _, _, _ = env.step(action1 = 0, action2 = 0)
+    state, _, _, _ = env.step(actions=[0,0])
     state = torch.cat(tuple(state for _ in range(4)))[None, :, :, :] 
 
     action_list = []
-    done_list = [False, False]
-        
+
     out = cv2.VideoWriter(opt.output, cv2.VideoWriter_fourcc(*"MJPG"), opt.fps, (800, 600))
 
-    while not done_list[0] or not done_list[1]:
-        
+    while not any(done_list):
+
         for drn in drone_list:
             action_list.append(drn.predict(state, train=False))
                 
         if opt.record == True:
-            next_state, raw_next_state, reward, done_list, info = env.step(action1 = action_list[0], action2 = action_list[1], record=True)
+            next_state, raw_next_state, reward, done_list, info = env.step(actions=action_list, record=True)
             out.write(raw_next_state)
         else:
-            next_state, reward, done_list, info = env.step(action1 = action_list[0], action2 = action_list[1])   
+            next_state, reward, done_list, info = env.step(actions=action_list)   
 
         next_state = torch.cat((state[0, 1:, :, :], next_state))[None, :, :, :]
         state = next_state
