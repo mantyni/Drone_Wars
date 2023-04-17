@@ -71,6 +71,7 @@ Colab notebooks will be provided soon.
     * Add different types of asteroids
     * Add power-ups for the drone
 * Improve AI
+    * Implement RL SAC and PPO algorithms 
     * ~~Improve RL method to reach higher scores~~
 * Multi-agent 
     * Make drones coordinate and work together
