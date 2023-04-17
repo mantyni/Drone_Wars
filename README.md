@@ -26,7 +26,7 @@ The agent is trained to control 2 drones in a centralised fashion (same policy c
 ## Fourth iteration, Decentralized Reinforcement Learning with Double Deep Q method and multiple drones
 There are two independed agents that are trained in a decentralized fashion. This method achieves the best scores and is most robust. Each agent has it's own policy with 3 actions. Training is taking slightly longer as centralized method due to resource constraints (multiple networks running concurently). 
 
-![Alt text](images/gameplay_rl_3.gif "Gameplay_Multi_Agent_RL")
+![Alt text](images/gameplay_rl_3_1.gif "Gameplay_Multi_Agent_RL")
 
 
 ## Instructions 
